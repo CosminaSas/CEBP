@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import stock.Stock;
 import stock.dtos.Offer;
@@ -14,48 +15,61 @@ import stock.dtos.Transaction;
 public class IBrokerImpl implements IBroker{
 
 	private volatile boolean running;
-	private Map<String,Stock> stocks = Collections.synchronizedMap(new HashMap<>());
-	private List<Transaction> transactions;
+	private Map<String,Stock> stocks = new ConcurrentHashMap<String,Stock>();
+	private List<Transaction> transactions = new ArrayList<>();
 	private List<Transaction> completedTransactions  = Collections.synchronizedList(new ArrayList<>());
-	private List<Offer> newOffers = Collections.synchronizedList(new ArrayList<>());
-	private List<String> delOffer;
-	private List<Offer> modOffer;
 
 	@Override
 	public void run() {
 		running = true;
 		while(running){
 			cyclic();
-		}
-		
+			synchronized(this){
+				try {
+					this.wait(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}		
 	}
 
-	private void cyclic(){
+	private synchronized void cyclic(){
+		System.out.println("cyclic");
+		if(completedTransactions.size() > 0){
 
+			synchronized(completedTransactions){
+				transactions.addAll(completedTransactions);
+				completedTransactions.forEach((t)->{System.out.println("transaction copied " + t.getID());});
+				completedTransactions.clear();
+			}
+		}
 	}
 
 	@Override
 	public String addOffer(Offer offer, String stockID) {
-		
-		newOffers.add(offer);
-		
+		Stock s = stocks.get(stockID);
+		s.addOffer(offer);
 		return null;
 	}
 
 	@Override
-	public String modifyOffer(String offerID, Offer newOffer) {
-		// TODO Auto-generated method stub
+	public String modifyOffer(String stockID,String offerID, Offer newOffer) {
+		Stock s = stocks.get(stockID);
+		s.modifyOffer(offerID,newOffer);
 		return null;
 	}
 
 	@Override
 	public double getStockPrice(String stockID) {
-		return stocks.get(stockID).getPrice();
+		Stock s = stocks.get(stockID);
+		return s.getPrice();
 	}
 
 	@Override
 	public List<String> getStockList() {
-		return new ArrayList(stocks.values());
+		return new ArrayList<String>(stocks.keySet());
 	}
 
 	@Override
@@ -77,14 +91,24 @@ public class IBrokerImpl implements IBroker{
 	}
 
 	@Override
-	public String subscribe(Stock stock) {
-		stocks.put(stock.getID(), stock);
-		return null;
+	public boolean subscribe(Stock stock) {
+		Stock val = stocks.put(stock.getID(), stock);
+		return val == null;
 	}
+
+	@Override
+	public boolean unsubscribe(Stock stock) {
+		Stock val = stocks.remove(stock.getID());
+		return val != null;
+	}
+
 
 	@Override
 	public int addTransaction(Transaction transaction) {
 		completedTransactions.add(transaction);
+		synchronized(this){
+			this.notify();
+		}
 		return 0;
 	}
 	

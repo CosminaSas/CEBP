@@ -8,12 +8,13 @@ import stock.dtos.Transaction;
 
 public interface IBroker extends Runnable{
 	public String addOffer(Offer offer, String stockID);
-	public String modifyOffer(String offerID, Offer newOffer);
+	public String modifyOffer(String stockID,String offerID, Offer newOffer);
 	public double getStockPrice(String stockID);
 	public List<String> getStockList();
 	public List<Offer> getBuyOffers(String stockID);
 	public List<Offer> getSellOffers(String stockID);
 	public List<Transaction> getStockHistory(String stockID);
-	public String subscribe(Stock stock);
+	public boolean subscribe(Stock stock);
+	public boolean unsubscribe(Stock stock);
 	public int addTransaction(Transaction transaction);
 }
