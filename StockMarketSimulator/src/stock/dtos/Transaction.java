@@ -8,15 +8,13 @@ public class Transaction {
 	private Offer sellOffer;
 	private Offer buyOffer;
 	private String stockID;
-	private int test;
 	private LocalDateTime timestamp;
 
-	public Transaction(String iD, Offer sellOffer, Offer buyOffer, String stockID, int test, LocalDateTime timestamp) {
+	public Transaction(String iD, Offer sellOffer, Offer buyOffer, String stockID, LocalDateTime timestamp) {
 		ID = iD;
 		this.sellOffer = sellOffer;
 		this.buyOffer = buyOffer;
 		this.stockID = stockID;
-		this.test = test;
 		this.timestamp = timestamp;
 	}
 
@@ -50,14 +48,6 @@ public class Transaction {
 
 	public void setStockID(String stockID) {
 		this.stockID = stockID;
-	}
-
-	public int getTest() {
-		return test;
-	}
-
-	public void setTest(int test) {
-		this.test = test;
 	}
 
 	public LocalDateTime getTimestamp() {
