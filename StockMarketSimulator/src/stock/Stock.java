@@ -2,7 +2,6 @@ package stock;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Random;
 
 import broker.IBroker;
 import common.OfferType;

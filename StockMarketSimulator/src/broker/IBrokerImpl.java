@@ -12,19 +12,19 @@ import stock.Stock;
 import stock.dtos.Offer;
 import stock.dtos.Transaction;
 
-public class IBrokerImpl implements IBroker{
+public class IBrokerImpl implements IBroker {
 
 	private volatile boolean running;
-	private Map<String,Stock> stocks = new ConcurrentHashMap<String,Stock>();
+	private Map<String, Stock> stocks = new ConcurrentHashMap<String, Stock>();
 	private List<Transaction> transactions = new ArrayList<>();
-	private List<Transaction> completedTransactions  = Collections.synchronizedList(new ArrayList<>());
+	private List<Transaction> completedTransactions = Collections.synchronizedList(new ArrayList<>());
 
 	@Override
 	public void run() {
 		running = true;
-		while(running){
+		while (running) {
 			cyclic();
-			synchronized(this){
+			synchronized (this) {
 				try {
 					this.wait(1000);
 				} catch (InterruptedException e) {
@@ -32,16 +32,18 @@ public class IBrokerImpl implements IBroker{
 					e.printStackTrace();
 				}
 			}
-		}		
+		}
 	}
 
-	private synchronized void cyclic(){
+	private synchronized void cyclic() {
 		System.out.println("cyclic");
-		if(completedTransactions.size() > 0){
+		if (completedTransactions.size() > 0) {
 
-			synchronized(completedTransactions){
+			synchronized (completedTransactions) {
 				transactions.addAll(completedTransactions);
-				completedTransactions.forEach((t)->{System.out.println("transaction copied " + t.getID());});
+				completedTransactions.forEach((t) -> {
+					System.out.println("transaction copied " + t.getID());
+				});
 				completedTransactions.clear();
 			}
 		}
@@ -55,9 +57,9 @@ public class IBrokerImpl implements IBroker{
 	}
 
 	@Override
-	public String modifyOffer(String stockID,String offerID, Offer newOffer) {
+	public String modifyOffer(String stockID, String offerID, Offer newOffer) {
 		Stock s = stocks.get(stockID);
-		s.modifyOffer(offerID,newOffer);
+		s.modifyOffer(offerID, newOffer);
 		return null;
 	}
 
@@ -87,7 +89,7 @@ public class IBrokerImpl implements IBroker{
 	@Override
 	public List<Transaction> getStockHistory(String stockID) {
 		Stock s = stocks.get(stockID);
-		return s.getHistory();
+		return s.getTransactionHistory();
 	}
 
 	@Override
@@ -102,16 +104,15 @@ public class IBrokerImpl implements IBroker{
 		return val != null;
 	}
 
-
 	@Override
 	public int addTransaction(Transaction transaction) {
 		completedTransactions.add(transaction);
-		synchronized(this){
+		synchronized (this) {
 			this.notify();
 		}
 		return 0;
 	}
-	
+
 	/**
 	 * @return the running
 	 */
