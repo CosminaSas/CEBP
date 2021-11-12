@@ -9,24 +9,25 @@ import client.dtos.StockTransaction;
 import clientbroker.ICBroker;
 import clientbroker.ICBrokerImpl;
 import common.ChanceGenerator;
+import common.OfferType;
 
 public class Client implements Runnable{
 
 
 
-	public static void main(String[] args) throws InterruptedException {
-		Client c1 = new Client("1",new ICBrokerImpl());
-		Client c2 = new Client("2",new ICBrokerImpl());
+	// public static void main(String[] args) throws InterruptedException {
+	// 	Client c1 = new Client("1",new ICBrokerImpl());
+	// 	Client c2 = new Client("2",new ICBrokerImpl());
 
-		new Thread(c1).start();
-		new Thread(c2).start();
+	// 	new Thread(c1).start();
+	// 	new Thread(c2).start();
 
-		Thread.sleep(10000);
+	// 	Thread.sleep(10000);
 
-		c1.setRunning(false);
-		c2.setRunning(false);
+	// 	c1.setRunning(false);
+	// 	c2.setRunning(false);
 
-	}
+	// }
 
 
 	private String id;
@@ -88,7 +89,7 @@ public class Client implements Runnable{
 	public void transactionCallback(boolean trSucc, StockTransaction tr){
 		if(trSucc){
 			//transaction success
-			pendingOffers.removeIf((o)->{return o.getId() == tr.getOfferId();});
+			pendingOffers.removeIf((o)->{return o.getID() == tr.getOfferID();});
 			transactionHistory.add(tr);
 			// add to owned stocks if we bought
 		}else{
@@ -114,10 +115,36 @@ public class Client implements Runnable{
 	
 	private int newOffer(String stockID, double price, double amount){
 
-		StockOffer offer = new StockOffer();
+		StockOffer offer = new StockOffer(stockID, stockID, null, amount, 0);
 
 		cBroker.addOffer(stockID, offer, (Boolean s,StockTransaction t) -> {transactionCallback(s,t);});
 		return 0;
+	}
+
+	public void getStocks(){
+		List<String> stocks = cBroker.getStockList();
+		printList(stocks);
+	}
+
+	private <T> void  printList(List<T> list) {
+		System.out.println("list : ");
+		if(list == null) return;
+		list.forEach((e) -> {System.out.println("\t" + e.toString());});
+	}
+
+	public void getBuyOffers(String stockID){
+		List<StockOffer> off = cBroker.getStockBuyOffers(stockID);
+		printList(off);
+	}
+
+	public void getSellOffers(String stockID){
+		List<StockOffer> off = cBroker.getStockSellOffers(stockID);
+		printList(off);
+	}
+
+	public void addOffer(String stockID, int q, double p,OfferType t){
+		StockOffer off = new StockOffer("", stockID, t, p, q);
+		cBroker.addOffer(stockID, off, (ts,tr) -> {transactionCallback(ts, tr);});
 	}
 
 }

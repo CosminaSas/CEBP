@@ -8,15 +8,46 @@ public class StockTransaction {
     private Double price;
     private int quantity;
     private LocalDateTime timestamp;
+    private String offerID;
 
-    public StockTransaction (String stockId, double price, int quantity, LocalDateTime timestamp) {
+    public StockTransaction (String stockId, String offerID,double price, int quantity, LocalDateTime timestamp) {
 
+        this.offerID = offerID;
         this.stockId = stockId;
         this.price = price;
         this.quantity = quantity;
         this.timestamp = timestamp;
     
     }
+
+
+    
+    /**
+     * @param price the price to set
+     */
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+
+
+
+    /**
+     * @return the offerID
+     */
+    public String getOfferID() {
+        return offerID;
+    }
+
+
+
+    /**
+     * @param offerID the offerID to set
+     */
+    public void setOfferID(String offerID) {
+        this.offerID = offerID;
+    }
+
+
 
     public String getStockId() {
         return stockId;

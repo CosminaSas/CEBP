@@ -1,6 +1,7 @@
 package stock;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import broker.IBroker;
@@ -11,10 +12,19 @@ import stock.dtos.Transaction;
 public class Stock {
 
 	private String ID;
-	private List<Offer> buyOffers;
-	private List<Offer> sellOffers;
-	private List<Transaction> transactionHistory;
+	private List<Offer> buyOffers = new ArrayList<>();
+	private List<Offer> sellOffers = new ArrayList<>();
+	private List<Transaction> transactionHistory = new ArrayList<>();
 	private IBroker broker;
+
+	
+
+	/**
+	 * @param iD
+	 */
+	public Stock(String iD) {
+		ID = iD;
+	}
 
 	volatile boolean running = true;
 	// Getters & Setters
@@ -98,18 +108,21 @@ public class Stock {
 		return min_price;
 	}
 
-	public int addOffer(Offer offer) {
+	public boolean addOffer(Offer offer) {
+
+		System.out.println("stock " + ID + "adding offer " + offer);
+
 
 		if (offer.getOfferType() == OfferType.BUY) {
 			buyOffers.add(offer);
-			return 1;
+			return true;
 
 		} else if (offer.getOfferType() == OfferType.SELL) {
 			sellOffers.add(offer);
-			return 1;
+			return true;
 		}
 
-		return 0;
+		return false;
 	}
 
 	public int modifyOffer(String offerID, Offer newOffer) {
