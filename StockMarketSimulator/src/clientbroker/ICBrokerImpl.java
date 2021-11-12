@@ -6,69 +6,105 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
+import broker.IBroker;
 import client.dtos.StockOffer;
 import client.dtos.StockTransaction;
 import stock.Stock;
+import stock.dtos.Offer;
+import stock.dtos.Transaction;
 
 public class ICBrokerImpl implements ICBroker{
 
-	private volatile boolean running;
 	private Map<String, Stock> stocks = new ConcurrentHashMap<String, Stock>(); //client-stock, broker=stocks?
 	private List<StockTransaction> transactions = new ArrayList<>();
+    private IBroker broker;
+    private String clientID;
 
-	@Override
-	public void addOffer(String stockID, StockOffer offer, BiConsumer<Boolean, StockTransaction> callback) {
-		
-		Map<String, Stock> broker;
-		Stock so = broker.get(stockID);
-		so.addOffer(offer);
-		//callback.accept(false, null);
-		
+	/**
+     * @param broker
+     * @param clientID
+     */
+    public ICBrokerImpl(IBroker broker, String clientID) {
+        this.broker = broker;
+        this.clientID = clientID;
+    }
+
+    @Override
+	public boolean addOffer(String stockID, StockOffer offer, BiConsumer<Boolean, StockTransaction> callback) {
+        offer.setClientID(clientID);
+        Offer serverOffer = stockOfferToOffer(offer,callback);
+		return broker.addOffer(serverOffer, stockID);
 	}
 	
+    private Offer stockOfferToOffer(StockOffer offer, BiConsumer<Boolean, StockTransaction> callback) {
+        Offer o = new Offer(offer.getClientID(),offer.getStockID() ,offer.getPrice(),offer.getQuantity(), offer.getType(), (ts,tr) -> {
+            StockTransaction str = transactionToStockTransaction(tr);
+            callback.accept(ts,str);
+        });
+        offer.setID(o.getID());
+        return o;
+    }
+
+    private StockTransaction transactionToStockTransaction(Transaction tr) {
+
+        String oID;
+
+        if(tr.getBuyOffer().getClientID().equals(clientID)){
+            oID = tr.getBuyOffer().getID();
+        }else{
+            oID = tr.getSellOffer().getID();
+        }
+        return new StockTransaction(tr.getID(), oID ,tr.getPrice(),tr.getQuantity() , tr.getTimestamp());
+    }
+
     @Override
     public double getStockPrice(String stockID) {
-        // TODO Auto-generated method stub
-        return 0;
+        return broker.getStockPrice(stockID);
     }
 
     @Override
     public List<String> getStockList() {
-        // TODO Auto-generated method stub
-        return null;
+        return broker.getStockList();
     }
 
     @Override
     public List<StockOffer> getStockBuyOffers(String stockID) {
-        // TODO Auto-generated method stub //return lista de offer, pt fiecare offer fac un for pt, return lista de stock offers, 
-		//ma uit ce apping am in offers, pot sa le iau pe toate su ke oun in stockOffer
-		List<Offer> off = broker.getStockSellOffers(stockID);
-		
-        return null;
+        List<Offer> sOffers = broker.getBuyOffers(stockID);
+        List<StockOffer> offers = new ArrayList<>();
+
+        sOffers.forEach((o) -> {offers.add(offerToStockOffer(o));});
+
+        return offers;
+    }
+
+    private StockOffer offerToStockOffer(Offer o) {
+        return new StockOffer(o.getID(), o.getStockID(), o.getOfferType(), o.getPrice(), o.getQuantity());
     }
 
     @Override
     public List<StockOffer> getStockSellOffers(String stockID) {
-        // TODO Auto-generated method stub
-        return null;
+        List<Offer> sOffers = broker.getSellOffers(stockID);
+        List<StockOffer> offers = new ArrayList<>();
+
+        sOffers.forEach((o) -> {offers.add(offerToStockOffer(o));});
+
+        return offers;
     }
 
     @Override
     public List<StockTransaction> getStockHistory(String stockID) {
-        // TODO Auto-generated method stub
-        return null;
+        List<Transaction> sHist = broker.getStockHistory(stockID);
+        List<StockTransaction> hist = new ArrayList<>();
+
+        sHist.forEach((t) -> {hist.add(transactionToStockTransaction(t));});
+
+        return hist;
     }
 
     @Override
-    public String modifyOffer(String offerID, StockOffer newOffer) {
-        // TODO Auto-generated method stub
-        return null;
+    public String modifyOffer(String offerID, StockOffer newOffer,BiConsumer<Boolean,StockTransaction> callback) {
+        Offer serverOffer = stockOfferToOffer(newOffer,callback);
+		return broker.modifyOffer(newOffer.getStockId(), offerID, serverOffer);
     }
-
-    @Override
-    public int offerCallback(boolean trSucc, StockTransaction transaction) {
-        // TODO Auto-generated method stub
-        return 0;
-}
 }
 

@@ -50,10 +50,9 @@ public class IBrokerImpl implements IBroker {
 	}
 
 	@Override
-	public String addOffer(Offer offer, String stockID) {
+	public boolean addOffer(Offer offer, String stockID) {
 		Stock s = stocks.get(stockID);
-		s.addOffer(offer);
-		return null;
+		return s.addOffer(offer);
 	}
 
 	@Override
@@ -95,6 +94,8 @@ public class IBrokerImpl implements IBroker {
 	@Override
 	public boolean subscribe(Stock stock) {
 		Stock val = stocks.put(stock.getID(), stock);
+		if(val != null)
+			stock.setBroker(this);
 		return val == null;
 	}
 
