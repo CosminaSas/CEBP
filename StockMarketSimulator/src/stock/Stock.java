@@ -6,11 +6,16 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 import broker.IBroker;
+import broker.IBrokerImpl;
 import common.OfferType;
 import stock.dtos.Offer;
 import stock.dtos.Transaction;
 
 public class Stock {
+
+	// testing purpose
+	private static final BiConsumer<Boolean, Transaction> callback = null;
+	//
 
 	private String ID;
 	private List<Offer> buyOffers = new ArrayList<>();
@@ -97,6 +102,7 @@ public class Stock {
 
 		// add transaction in transactionHistory
 		transactionHistory.add(transaction);
+		System.out.println("Transaction was made:" + transaction);
 	}
 
 	public double getPrice() {
@@ -110,17 +116,20 @@ public class Stock {
 		if (offer.getOfferType() == OfferType.BUY) {
 			buyOffers.add(offer);
 			System.out.println("offer added: " + offer.getID());
-			if (maxBuy.getPrice() < offer.getPrice())
+			if (buyOffers.size() == 1)
 				maxBuy = offer;
-			this.notify();
-			return true;
+			else if (maxBuy.getPrice() < offer.getPrice())
+				// this.notify();
+				return true;
 
 		} else if (offer.getOfferType() == OfferType.SELL) {
 			sellOffers.add(offer);
 			System.out.println("offer added: " + offer.getID());
-			if (minSell.getPrice() > offer.getPrice())
+			if (sellOffers.size() == 1)
 				minSell = offer;
-			this.notify();
+			else if (minSell.getPrice() > offer.getPrice())
+				minSell = offer;
+			// this.notify();
 			return true;
 		}
 
@@ -188,7 +197,7 @@ public class Stock {
 			cyclic();
 			synchronized (this) {
 				try {
-					this.wait(1000);
+					this.wait(1);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -233,4 +242,21 @@ public class Stock {
 		return sb.toString();
 	}
 
+	public static void main(String args[]) {
+		Stock stock = new Stock("123");
+		IBroker broker = new IBrokerImpl();
+		stock.setBroker(broker);
+
+		Offer buyOffer1 = new Offer("client1", "123", 31.4, 1, OfferType.BUY, callback);
+		// Offer buyOffer2 = new Offer("client2", "123", 130.4, 1, OfferType.BUY,
+		// callback);
+		Offer sellOffer1 = new Offer("seller1", "123", 30.4, 1, OfferType.SELL, callback);
+
+		stock.addOffer(buyOffer1);
+		// stock.addOffer(buyOffer2);
+		stock.addOffer(sellOffer1);
+		stock.run();
+		// stock.running = false;
+		System.out.println("Gata");
+	}
 }
