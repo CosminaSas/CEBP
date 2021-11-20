@@ -26,7 +26,7 @@ public class Logger {
 		StringBuilder sb = new StringBuilder();
 		String timeStamp = new SimpleDateFormat("[yyyy.MM.dd HH:mm:ss] ").format(new Date());
 		sb.append(timeStamp);
-		sb.append(caller.getClass().getSimpleName());
+		sb.append(caller.getSimpleName());
 		sb.append(": ");
 		sb.append(msg);
 		System.out.println(sb.toString());
