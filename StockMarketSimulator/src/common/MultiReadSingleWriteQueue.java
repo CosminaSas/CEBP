@@ -84,6 +84,7 @@ public class MultiReadSingleWriteQueue<T> {
     private Lock r;
     private Lock w;
     private Lock queueLock;
+    private Lock deleteLock;
     private volatile boolean queing = false;
     private Condition qc;
     private Queue<T> writeQueue;
@@ -119,6 +120,15 @@ public class MultiReadSingleWriteQueue<T> {
         initLock();
     }
 
+    public void delete(T ...elms){
+        w.lock();
+        try{
+            queue.removeAll(Arrays.asList(elms));
+        }finally{
+            w.unlock();
+        }
+    }
+    
     public void add(T e){
         queueLock.lock();
         try{
