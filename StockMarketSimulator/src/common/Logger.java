@@ -6,19 +6,19 @@ import java.util.Date;
 public class Logger {
 	
 	public static void main(String[] args) {
-		Logger logger = new Logger(new Object());
+		Logger logger = new Logger(Logger.class);
 		logger.log("here");
 		logger.log("here");
 		logger.log("here");
 		logger.log("here");
 	}
 
-	private Object caller;
+	private Class caller;
 
 	/**
 	 * @param caller
 	 */
-	public Logger(Object caller) {
+	public Logger(Class caller) {
 		this.caller = caller;
 	}
 
