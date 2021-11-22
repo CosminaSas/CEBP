@@ -3,6 +3,7 @@ package client;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import client.dtos.StockOffer;
 import client.dtos.StockTransaction;
@@ -10,6 +11,8 @@ import clientbroker.ICBroker;
 import clientbroker.ICBrokerImpl;
 import common.ChanceGenerator;
 import common.OfferType;
+import stock.Stock;
+import clientbroker.*;
 
 public class Client implements Runnable{
 
@@ -35,6 +38,9 @@ public class Client implements Runnable{
 	private List<StockTransaction> transactionHistory;
 	private List<StockOffer> pendingOffers;
 	private Map<String,Double> ownedStocks;
+	private List<String> stocks;
+	private List<ICBrokerImpl> sellOffer;
+	private List<StockOffer> decideBuy;
 
 	private volatile boolean running;
 
@@ -74,16 +80,29 @@ public class Client implements Runnable{
 	private void cyclic() {
 		
 		System.out.println("cyclic " + id);
-		if(new ChanceGenerator().getChance(5, 10)){
-			newOffer(id, 0, 0);
-		}
-		//read stock list
+	
+		//read stock list[]
+		stocks = cBroker.getStockList();
+	
 		//decide if new buy offer
 		//	* get sell offer list
+		if(new ChanceGenerator().getChance(5, 10)){
+			int stockIndex = new Random().nextInt(stocks.size());
+			double stockPrice = cBroker.getStockPrice(stocks.get(stockIndex));
+			newOffer(stocks.get(stockIndex), stockPrice, 1, OfferType.BUY);
+			System.out.println("Decided to buy stock " + stocks.get(stockIndex) + " at price " + stockPrice);
+		}
+				
 		//decide if new sell offer for owned stocks
 		//	* get buy offer list
-		//decide if offer modification is necesarry
+		if(new ChanceGenerator().getChance(5, 10)){
+			System.out.println("Decided to sell stock ... at price ...");
+		}
 
+		//decide if offer modification is necesarry
+		if(new ChanceGenerator().getChance(5, 10)){
+			System.out.println("Decided to modify stock ... ");
+		}
 	}
 
 	public void transactionCallback(boolean trSucc, StockTransaction tr){
@@ -113,11 +132,12 @@ public class Client implements Runnable{
 		this.running = running;
 	}
 	
-	private int newOffer(String stockID, double price, double amount){
+	private int newOffer(String stockID, double price, int amount, OfferType type){
 
-		StockOffer offer = new StockOffer(stockID, stockID, null, amount, 0);
-
+		StockOffer offer = new StockOffer(stockID, stockID, type, price, amount);
+		offer.setClientID(id);
 		cBroker.addOffer(stockID, offer, (Boolean s,StockTransaction t) -> {transactionCallback(s,t);});
+
 		return 0;
 	}
 
