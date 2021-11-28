@@ -2,11 +2,13 @@ package stock;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 
 import broker.IBroker;
 import broker.IBrokerImpl;
+import common.MultiReadSingleWriteQueue;
 import common.OfferType;
 import stock.dtos.Offer;
 import stock.dtos.Transaction;
@@ -18,8 +20,8 @@ public class Stock {
 	//
 
 	private String ID;
-	private List<Offer> buyOffers = new ArrayList<>();
-	private List<Offer> sellOffers = new ArrayList<>();
+	private MultiReadSingleWriteQueue<Offer> buyOffers = new MultiReadSingleWriteQueue<>();
+	private MultiReadSingleWriteQueue<Offer> sellOffers = new MultiReadSingleWriteQueue<>();
 	private List<Transaction> transactionHistory = new ArrayList<>();
 	private IBroker broker;
 	private Offer minSell;
@@ -44,20 +46,20 @@ public class Stock {
 	}
 
 	public List<Offer> getBuyOffers() {
-		return buyOffers;
+		return Arrays.asList(buyOffers.getArray());
 	}
 
-	public void setBuyOffers(List<Offer> buyOffers) {
-		this.buyOffers = buyOffers;
-	}
+	// public void setBuyOffers(List<Offer> buyOffers) {
+	// 	this.buyOffers = buyOffers;
+	// }
 
 	public List<Offer> getSellOffers() {
-		return sellOffers;
+		return Arrays.asList(sellOffers.getArray());
 	}
 
-	public void setSellOffers(List<Offer> sellOffers) {
-		this.sellOffers = sellOffers;
-	}
+	// public void setSellOffers(List<Offer> sellOffers) {
+	// 	this.sellOffers = sellOffers;
+	// }
 
 	public List<Transaction> getTransactionHistory() {
 		return transactionHistory;
@@ -87,18 +89,10 @@ public class Stock {
 		broker.addTransaction(transaction);
 
 		// delete buy offer
-		for (Offer offer : buyOffers) {
-			if (offer.getID() == buyOffer.getID()) {
-				buyOffers.remove(offer);
-			}
-		}
-
+		buyOffers.delete(buyOffer);
 		// delete sell offer
-		for (Offer offer : sellOffers) {
-			if (offer.getID() == sellOffer.getID()) {
-				sellOffers.remove(offer);
-			}
-		}
+		sellOffers.delete(sellOffer);
+		
 
 		// add transaction in transactionHistory
 		transactionHistory.add(transaction);
@@ -116,7 +110,7 @@ public class Stock {
 		if (offer.getOfferType() == OfferType.BUY) {
 			buyOffers.add(offer);
 			System.out.println("offer added: " + offer.getID());
-			if (buyOffers.size() == 1)
+			if (maxBuy == null)
 				maxBuy = offer;
 			else if (maxBuy.getPrice() < offer.getPrice())
 				// this.notify();
@@ -125,7 +119,7 @@ public class Stock {
 		} else if (offer.getOfferType() == OfferType.SELL) {
 			sellOffers.add(offer);
 			System.out.println("offer added: " + offer.getID());
-			if (sellOffers.size() == 1)
+			if (minSell == null)
 				minSell = offer;
 			else if (minSell.getPrice() > offer.getPrice())
 				minSell = offer;
@@ -138,12 +132,12 @@ public class Stock {
 
 	public int modifyOffer(String offerID, Offer newOffer) {
 		if (newOffer.getOfferType() == OfferType.BUY) {
-			for (Offer offer : buyOffers) {
+			for (Offer offer : buyOffers.getArray()) {
 				if (offer.getID() == offerID) {
 					if (maxBuy.getID() == offerID) {
-						maxBuy = getMax();
+						maxBuy = getMax(buyOffers.getArray());
 					}
-					buyOffers.remove(offer);
+					buyOffers.delete(offer);
 					buyOffers.add(newOffer);
 					this.notify();
 					return 1;
@@ -151,12 +145,12 @@ public class Stock {
 			}
 
 		} else if (newOffer.getOfferType() == OfferType.SELL) {
-			for (Offer offer : sellOffers) {
+			for (Offer offer : sellOffers.getArray()) {
 				if (offer.getID() == offerID) {
 					if (minSell.getID() == offerID) {
-						minSell = getMin();
+						minSell = getMin(sellOffers.getArray());
 					}
-					sellOffers.remove(offer);
+					sellOffers.delete(offer);
 					sellOffers.add(newOffer);
 					this.notify();
 					return 1;
@@ -168,11 +162,12 @@ public class Stock {
 	}
 
 	// cu for
-	private Offer getMin() {
-		double min_price = sellOffers.get(0).getPrice();
-		Offer min_offer = sellOffers.get(0);
+	private Offer getMin(Offer[] offers) {
 
-		for (Offer offer : sellOffers) {
+		double min_price = offers[0].getPrice();
+		Offer min_offer = offers[0];
+
+		for (Offer offer : offers) {
 			if (min_price > offer.getPrice())
 				min_offer = offer;
 		}
@@ -180,11 +175,11 @@ public class Stock {
 		return min_offer;
 	}
 
-	private Offer getMax() {
-		double max_price = sellOffers.get(0).getPrice();
-		Offer max_offer = sellOffers.get(0);
+	private Offer getMax(Offer[] offers) {
+		double max_price = offers[0].getPrice();
+		Offer max_offer = offers[0];
 
-		for (Offer offer : sellOffers) {
+		for (Offer offer : offers) {
 			if (max_price < offer.getPrice())
 				max_offer = offer;
 		}
@@ -212,8 +207,8 @@ public class Stock {
 
 	public void cyclic() {
 
-		for (Offer sellOffer : sellOffers) {
-			for (Offer buyOffer : buyOffers) {
+		for (Offer sellOffer : sellOffers.getArray()) {
+			for (Offer buyOffer : buyOffers.getArray()) {
 				if (sellOffer.getPrice() <= buyOffer.getPrice())
 					makeTransaction(sellOffer, buyOffer);
 			}
