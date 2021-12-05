@@ -1,21 +1,27 @@
 package stock.dtos;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 public class Transaction {
+
+	private static int IDs = 0;
 
 	private String ID;
 	private Offer sellOffer;
 	private Offer buyOffer;
 	private String stockID;
 	private LocalDateTime timestamp;
+	private long createdAt;
 
-	public Transaction(String iD, Offer sellOffer, Offer buyOffer, String stockID, LocalDateTime timestamp) {
-		ID = iD;
+	public Transaction(Offer sellOffer, Offer buyOffer, String stockID) {
+		this.createdAt = System.currentTimeMillis();
+		this.ID = "" + Transaction.IDs++;
 		this.sellOffer = sellOffer;
 		this.buyOffer = buyOffer;
 		this.stockID = stockID;
-		this.timestamp = timestamp;
+		this.timestamp = Instant.ofEpochMilli(createdAt).atZone(ZoneId.systemDefault()).toLocalDateTime();
 	}
 
 	public String getID() {
@@ -64,6 +70,27 @@ public class Transaction {
 
 	public int getQuantity() {
 		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Transaction [ID=");
+		builder.append(ID);
+		builder.append(", buyOffer=");
+		builder.append(buyOffer);
+		builder.append(", sellOffer=");
+		builder.append(sellOffer);
+		builder.append(", stockID=");
+		builder.append(stockID);
+		builder.append(", timestamp=");
+		builder.append(timestamp);
+		builder.append("]");
+		return builder.toString();
 	}
 
 }

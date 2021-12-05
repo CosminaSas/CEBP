@@ -4,7 +4,7 @@ import java.util.function.BiConsumer;
 
 import common.OfferType;
 
-public class Offer {
+public class Offer implements Comparable<Offer>{
 
     private static int IDs = 0;
 
@@ -15,8 +15,10 @@ public class Offer {
     private int quantity;
     private OfferType offerType;
     private BiConsumer<Boolean, Transaction> callback;
+    private long createdAt;
 
     public Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<Boolean, Transaction> callback) {
+        this.createdAt = System.currentTimeMillis();
         this.ID = Offer.IDs++ + "";
         this.stockID = stockID;
         this.clientID = clientID;
@@ -24,6 +26,7 @@ public class Offer {
         this.quantity = quantity;
         this.offerType = offerType;
         this.callback = callback;
+
     }
     
 	/**
@@ -116,4 +119,23 @@ public class Offer {
         return builder.toString();
     }
 
+    /**
+     * @return the createdAt
+     */
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    @Override
+    public int compareTo(Offer o) {
+        if(this.createdAt < o.getCreatedAt())
+            return -1;
+        if(this.createdAt > o.getCreatedAt())
+            return 1;
+        return 0;
+    }
+
+
+
+    
 }

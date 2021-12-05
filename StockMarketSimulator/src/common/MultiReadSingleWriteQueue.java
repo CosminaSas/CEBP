@@ -69,7 +69,7 @@ public class MultiReadSingleWriteQueue<T> {
         @Override
         public void run() {
             for(int i = 0 ; i < 100; i++){
-                q.getArray();
+                q.getArray(new Integer[0]);
             }
             
         }
@@ -162,10 +162,10 @@ public class MultiReadSingleWriteQueue<T> {
         }
     }
     
-    public T[] getArray(){
+    public T[] getArray(T[] a){
         r.lock();
         try{
-            return (T[]) queue.toArray();
+            return queue.toArray(a);
         }finally{
             r.unlock();
         }
