@@ -13,12 +13,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class MultiReadSingleWriteQueue<T> {
+public class MultiReadSingleWriteCollection<T> {
 
-    private static Logger logger = new Logger(MultiReadSingleWriteQueue.class);
+    private static Logger logger = new Logger(MultiReadSingleWriteCollection.class);
 
     public static void main(String[] args) {
-        MultiReadSingleWriteQueue<Integer> q = new MultiReadSingleWriteQueue<>();
+        MultiReadSingleWriteCollection<Integer> q = new MultiReadSingleWriteCollection<Integer> (new PriorityQueue<Integer>());
         List<Thread> runnables = new ArrayList<>();
 
         for(int i = 0 ; i < 10 ; i++){
@@ -36,15 +36,15 @@ public class MultiReadSingleWriteQueue<T> {
             e.printStackTrace();
         }});
 
-        q.queue.forEach((i)->{logger.log(i+"");});
+        q.collection.forEach((i)->{logger.log(i+"");});
 
     }
 
     private static class WR implements Runnable{
         Random rnd = new Random();
-        MultiReadSingleWriteQueue<Integer> q;
+        MultiReadSingleWriteCollection<Integer> q;
 
-        public WR(MultiReadSingleWriteQueue<Integer> q){
+        public WR(MultiReadSingleWriteCollection<Integer> q){
             this.q = q;
         }
 
@@ -60,9 +60,9 @@ public class MultiReadSingleWriteQueue<T> {
     }
 
     private static class RR implements Runnable{
-        MultiReadSingleWriteQueue<Integer> q;
+        MultiReadSingleWriteCollection<Integer> q;
 
-        public RR(MultiReadSingleWriteQueue<Integer> q){
+        public RR(MultiReadSingleWriteCollection<Integer> q){
             this.q = q;
         }
 
@@ -79,7 +79,7 @@ public class MultiReadSingleWriteQueue<T> {
 
 
 
-    private PriorityQueue<T> queue;
+    private Collection<T> collection;
     private ReentrantReadWriteLock rwl;
     private Lock r;
     private Lock w;
@@ -99,31 +99,15 @@ public class MultiReadSingleWriteQueue<T> {
         qc = queueLock.newCondition();
     }
 
-    public MultiReadSingleWriteQueue(PriorityQueue<T> ls){
-        this.queue = ls;
-        initLock();
-    }
-
-    public MultiReadSingleWriteQueue(Collection<T> e){
-        queue = new PriorityQueue<T>(e);
-        initLock();
-    }
-
-    public MultiReadSingleWriteQueue(T...elm){
-        queue = new PriorityQueue<T>();
-        queue.addAll(Arrays.asList(elm));
-        initLock();
-    }
-    
-    public MultiReadSingleWriteQueue(){
-        queue = new PriorityQueue<T>();
+    public MultiReadSingleWriteCollection(Collection<T> ls){
+        this.collection = ls;
         initLock();
     }
 
     public void delete(T ...elms){
         w.lock();
         try{
-            queue.removeAll(Arrays.asList(elms));
+            collection.removeAll(Arrays.asList(elms));
         }finally{
             w.unlock();
         }
@@ -150,7 +134,7 @@ public class MultiReadSingleWriteQueue<T> {
             queueLock.lock();
             try{
                 logger.log("write");
-                queue.addAll(writeQueue);
+                collection.addAll(writeQueue);
                 writeQueue.clear();
                 queing = false;
                 qc.signalAll();
@@ -165,7 +149,7 @@ public class MultiReadSingleWriteQueue<T> {
     public T[] getArray(T[] a){
         r.lock();
         try{
-            return queue.toArray(a);
+            return collection.toArray(a);
         }finally{
             r.unlock();
         }

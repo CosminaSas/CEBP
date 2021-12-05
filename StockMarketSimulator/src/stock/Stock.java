@@ -6,11 +6,12 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.function.BiConsumer;
 
 import broker.IBroker;
 import broker.IBrokerImpl;
-import common.MultiReadSingleWriteQueue;
+import common.MultiReadSingleWriteCollection;
 import common.OfferType;
 import stock.dtos.Offer;
 import stock.dtos.Transaction;
@@ -23,8 +24,8 @@ public class Stock {
 	private static Offer[] arr = new Offer[0];
 
 	private String ID;
-	private MultiReadSingleWriteQueue<Offer> buyOffers = new MultiReadSingleWriteQueue<Offer>();
-	private MultiReadSingleWriteQueue<Offer> sellOffers = new MultiReadSingleWriteQueue<Offer>();
+	private MultiReadSingleWriteCollection<Offer> buyOffers = new MultiReadSingleWriteCollection<Offer>(new PriorityQueue<Offer>());
+	private MultiReadSingleWriteCollection<Offer> sellOffers = new MultiReadSingleWriteCollection<Offer>(new PriorityQueue<Offer>());
 	private List<Transaction> transactionHistory = new ArrayList<>();
 	private IBroker broker;
 	private Offer minSell;
