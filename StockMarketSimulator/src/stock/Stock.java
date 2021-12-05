@@ -1,8 +1,5 @@
 package stock;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,12 +18,15 @@ public class Stock {
 	// testing purpose
 	private static final BiConsumer<Boolean, Transaction> callback = null;
 	//
-	private static Offer[] arr = new Offer[0];
+	private static Offer[] oarr = new Offer[0];
+	private static Transaction[] tarr = new Transaction[0];
 
+	
+	private volatile boolean running = true;
 	private String ID;
 	private MultiReadSingleWriteCollection<Offer> buyOffers = new MultiReadSingleWriteCollection<Offer>(new PriorityQueue<Offer>());
 	private MultiReadSingleWriteCollection<Offer> sellOffers = new MultiReadSingleWriteCollection<Offer>(new PriorityQueue<Offer>());
-	private List<Transaction> transactionHistory = new ArrayList<>();
+	private MultiReadSingleWriteCollection<Transaction> transactionHistory = new MultiReadSingleWriteCollection<Transaction>(new ArrayList<Transaction>());
 	private IBroker broker;
 	private Offer minSell;
 	private Offer maxBuy;
@@ -38,32 +38,23 @@ public class Stock {
 		ID = iD;
 	}
 
-	volatile boolean running = true;
 	// Getters & Setters
 
 	public String getID() {
 		return ID;
 	}
 
-	public void setID(String iD) {
-		ID = iD;
-	}
-
 	public List<Offer> getBuyOffers() {
-		return Arrays.asList(buyOffers.getArray(arr));
+		return Arrays.asList(buyOffers.getArray(oarr));
 	}
 
 	public List<Offer> getSellOffers() {
-		return Arrays.asList(sellOffers.getArray(arr));
+		return Arrays.asList(sellOffers.getArray(oarr));
 	}
 
 
 	public List<Transaction> getTransactionHistory() {
-		return transactionHistory;
-	}
-
-	public void setTransactionHistory(List<Transaction> transactionHistory) {
-		this.transactionHistory = transactionHistory;
+		return Arrays.asList(transactionHistory.getArray(tarr));
 	}
 
 	public IBroker getBroker() {
@@ -128,10 +119,10 @@ public class Stock {
 
 	public int modifyOffer(String offerID, Offer newOffer) {
 		if (newOffer.getOfferType() == OfferType.BUY) {
-			for (Offer offer : buyOffers.getArray(arr)) {
+			for (Offer offer : buyOffers.getArray(oarr)) {
 				if (offer.getID() == offerID) {
 					if (maxBuy.getID() == offerID) {
-						maxBuy = getMax(buyOffers.getArray(arr));
+						maxBuy = getMax(buyOffers.getArray(oarr));
 					}
 					buyOffers.delete(offer);
 					buyOffers.add(newOffer);
@@ -141,10 +132,10 @@ public class Stock {
 			}
 
 		} else if (newOffer.getOfferType() == OfferType.SELL) {
-			for (Offer offer : sellOffers.getArray(arr)) {
+			for (Offer offer : sellOffers.getArray(oarr)) {
 				if (offer.getID() == offerID) {
 					if (minSell.getID() == offerID) {
-						minSell = getMin(sellOffers.getArray(arr));
+						minSell = getMin(sellOffers.getArray(oarr));
 					}
 					sellOffers.delete(offer);
 					sellOffers.add(newOffer);
@@ -184,13 +175,14 @@ public class Stock {
 	}
 
 	public void run() {
+		running = true;
+		
 		while (running) {
 			cyclic();
 			synchronized (this) {
 				try {
 					this.wait(1);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -198,13 +190,13 @@ public class Stock {
 	}
 
 	public void stopRunning() {
-		running = false;
+		this.running = false;
 	}
 
 	public void cyclic() {
 
-		for (Offer sellOffer : sellOffers.getArray(arr)) {
-			for (Offer buyOffer : buyOffers.getArray(arr)) {
+		for (Offer sellOffer : sellOffers.getArray(oarr)) {
+			for (Offer buyOffer : buyOffers.getArray(oarr)) {
 				if (sellOffer.getPrice() <= buyOffer.getPrice())
 					makeTransaction(sellOffer, buyOffer);
 			}

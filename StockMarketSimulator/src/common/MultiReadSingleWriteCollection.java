@@ -84,7 +84,6 @@ public class MultiReadSingleWriteCollection<T> {
     private Lock r;
     private Lock w;
     private Lock queueLock;
-    private Lock deleteLock;
     private volatile boolean queing = false;
     private Condition qc;
     private Queue<T> writeQueue;
