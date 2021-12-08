@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Vector;
 import java.util.function.BiConsumer;
 
 import broker.IBroker;
@@ -21,12 +22,14 @@ public class Stock {
 	private static Offer[] oarr = new Offer[0];
 	private static Transaction[] tarr = new Transaction[0];
 
-	
 	private volatile boolean running = true;
 	private String ID;
-	private MultiReadSingleWriteCollection<Offer> buyOffers = new MultiReadSingleWriteCollection<Offer>(new PriorityQueue<Offer>());
-	private MultiReadSingleWriteCollection<Offer> sellOffers = new MultiReadSingleWriteCollection<Offer>(new PriorityQueue<Offer>());
-	private MultiReadSingleWriteCollection<Transaction> transactionHistory = new MultiReadSingleWriteCollection<Transaction>(new ArrayList<Transaction>());
+	private MultiReadSingleWriteCollection<Offer> buyOffers = new MultiReadSingleWriteCollection<Offer>(
+			new PriorityQueue<Offer>());
+	private MultiReadSingleWriteCollection<Offer> sellOffers = new MultiReadSingleWriteCollection<Offer>(
+			new PriorityQueue<Offer>());
+	private MultiReadSingleWriteCollection<Transaction> transactionHistory = new MultiReadSingleWriteCollection<Transaction>(
+			new ArrayList<Transaction>());
 	private IBroker broker;
 	private Offer minSell;
 	private Offer maxBuy;
@@ -52,7 +55,6 @@ public class Stock {
 		return Arrays.asList(sellOffers.getArray(oarr));
 	}
 
-
 	public List<Transaction> getTransactionHistory() {
 		return Arrays.asList(transactionHistory.getArray(tarr));
 	}
@@ -69,12 +71,11 @@ public class Stock {
 
 	public void makeTransaction(Offer sellOffer, Offer buyOffer) {
 
-		
 		// delete buy offer
 		buyOffers.delete(buyOffer);
 		// delete sell offer
 		sellOffers.delete(sellOffer);
-		
+
 		// create transaction
 		Transaction transaction = new Transaction(sellOffer, buyOffer, this.ID);
 
@@ -119,26 +120,27 @@ public class Stock {
 
 	public int modifyOffer(String offerID, Offer newOffer) {
 		if (newOffer.getOfferType() == OfferType.BUY) {
-			for (Offer offer : buyOffers.getArray(oarr)) {
+			Offer[] offersBuy = buyOffers.getArray(oarr);
+			for (Offer offer : offersBuy) {
 				if (offer.getID() == offerID) {
-					if (maxBuy.getID() == offerID) {
-						maxBuy = getMax(buyOffers.getArray(oarr));
-					}
 					buyOffers.delete(offer);
 					buyOffers.add(newOffer);
+					if (maxBuy.getID() == offerID) {
+						maxBuy = getMax(offersBuy);
+					}
 					this.notify();
 					return 1;
 				}
 			}
-
 		} else if (newOffer.getOfferType() == OfferType.SELL) {
-			for (Offer offer : sellOffers.getArray(oarr)) {
+			Offer[] offersSell = sellOffers.getArray(oarr);
+			for (Offer offer : offersSell) {
 				if (offer.getID() == offerID) {
-					if (minSell.getID() == offerID) {
-						minSell = getMin(sellOffers.getArray(oarr));
-					}
 					sellOffers.delete(offer);
 					sellOffers.add(newOffer);
+					if (minSell.getID() == offerID) {
+						minSell = getMin(offersSell);
+					}
 					this.notify();
 					return 1;
 				}
@@ -176,7 +178,7 @@ public class Stock {
 
 	public void run() {
 		running = true;
-		
+
 		while (running) {
 			cyclic();
 			synchronized (this) {
@@ -206,23 +208,24 @@ public class Stock {
 	// // Generate random string
 	// static String getAlphaNumericString(int n) {
 
-	// 	// chose a Character random from this String
-	// 	String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "0123456789" + "abcdefghijklmnopqrstuvxyz";
+	// // chose a Character random from this String
+	// String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "0123456789" +
+	// "abcdefghijklmnopqrstuvxyz";
 
-	// 	// create StringBuffer size of AlphaNumericString
-	// 	StringBuilder sb = new StringBuilder(n);
+	// // create StringBuffer size of AlphaNumericString
+	// StringBuilder sb = new StringBuilder(n);
 
-	// 	for (int i = 0; i < n; i++) {
+	// for (int i = 0; i < n; i++) {
 
-	// 		// generate a random number between
-	// 		// 0 to AlphaNumericString variable length
-	// 		int index = (int) (AlphaNumericString.length() * Math.random());
+	// // generate a random number between
+	// // 0 to AlphaNumericString variable length
+	// int index = (int) (AlphaNumericString.length() * Math.random());
 
-	// 		// add Character one by one in end of sb
-	// 		sb.append(AlphaNumericString.charAt(index));
-	// 	}
+	// // add Character one by one in end of sb
+	// sb.append(AlphaNumericString.charAt(index));
+	// }
 
-	// 	return sb.toString();
+	// return sb.toString();
 	// }
 
 	public static void main(String args[]) {
@@ -231,13 +234,46 @@ public class Stock {
 		stock.setBroker(broker);
 
 		Offer buyOffer1 = new Offer("client1", "123", 31.4, 1, OfferType.BUY, callback);
-		// Offer buyOffer2 = new Offer("client2", "123", 130.4, 1, OfferType.BUY,
-		// callback);
 		Offer sellOffer1 = new Offer("seller1", "123", 31.4, 1, OfferType.SELL, callback);
+		Offer sellOffer2 = new Offer("seller2", "123", 30.4, 3, OfferType.SELL, callback);
+		Offer sellOffer3 = new Offer("seller3", "123", 31.4, 1, OfferType.SELL, callback);
+		Offer buyOffer2 = new Offer("client2", "123", 21.4, 6, OfferType.BUY, callback);
+		Offer buyOffer3 = new Offer("client3", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer buyOffer4 = new Offer("client4", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer buyOffer5 = new Offer("client5", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer sellOffer4 = new Offer("seller4", "123", 31.4, 1, OfferType.SELL, callback);
+		Offer buyOffer6 = new Offer("client6", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer buyOffer7 = new Offer("client7", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer sellOffer5 = new Offer("seller5", "123", 301.4, 10, OfferType.SELL, callback);
+		Offer sellOffer6 = new Offer("seller6", "123", 31.4, 1, OfferType.SELL, callback);
+		Offer sellOffer7 = new Offer("seller7", "123", 31.4, 1, OfferType.SELL, callback);
+		Offer sellOffer8 = new Offer("seller8", "123", 31.4, 1, OfferType.SELL, callback);
+		Offer buyOffer8 = new Offer("client8", "123", 310.4, 10, OfferType.BUY, callback);
+		Offer buyOffer9 = new Offer("client9", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer buyOffer10 = new Offer("client10", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer sellOffer9 = new Offer("seller9", "123", 31.4, 1, OfferType.SELL, callback);
+		Offer sellOffer10 = new Offer("seller10", "123", 10.4, 9, OfferType.SELL, callback);
 
-		stock.addOffer(buyOffer1);
-		// stock.addOffer(buyOffer2);
 		stock.addOffer(sellOffer1);
+		stock.addOffer(buyOffer1);
+		stock.addOffer(sellOffer2);
+		stock.addOffer(sellOffer3);
+		stock.addOffer(buyOffer2);
+		stock.addOffer(buyOffer3);
+		stock.addOffer(buyOffer4);
+		stock.addOffer(buyOffer5);
+		stock.addOffer(sellOffer4);
+		stock.addOffer(buyOffer6);
+		stock.addOffer(buyOffer7);
+		stock.addOffer(sellOffer5);
+		stock.addOffer(sellOffer6);
+		stock.addOffer(sellOffer7);
+		stock.addOffer(sellOffer8);
+		stock.addOffer(buyOffer8);
+		stock.addOffer(buyOffer9);
+		stock.addOffer(buyOffer10);
+		stock.addOffer(sellOffer9);
+		stock.addOffer(sellOffer10);
 		stock.cyclic();
 		// stock.running = false;
 		System.out.println("Gata");
