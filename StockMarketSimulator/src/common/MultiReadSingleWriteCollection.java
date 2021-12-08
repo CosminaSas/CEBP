@@ -103,6 +103,16 @@ public class MultiReadSingleWriteCollection<T> {
         initLock();
     }
 
+    public boolean contains(T elm){
+        r.lock();
+        try{
+            return collection.contains(elm);
+        }finally{
+            r.unlock();
+        }
+    }
+
+
     public void delete(T ...elms){
         w.lock();
         try{
