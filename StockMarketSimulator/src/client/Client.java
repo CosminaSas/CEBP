@@ -86,8 +86,8 @@ public class Client implements Runnable{
 
 	}
 
-	public void transactionCallback(boolean trSucc, StockTransaction tr){
-		if(trSucc){
+	public void transactionCallback(StockTransaction tr){
+		if(tr!=null){
 			//transaction success
 			pendingOffers.removeIf((o)->{return o.getID() == tr.getOfferID();});
 			transactionHistory.add(tr);
@@ -117,7 +117,7 @@ public class Client implements Runnable{
 
 		StockOffer offer = new StockOffer(stockID, stockID, null, amount, 0);
 
-		cBroker.addOffer(stockID, offer, (Boolean s,StockTransaction t) -> {transactionCallback(s,t);});
+		cBroker.addOffer(stockID, offer, (t) -> {transactionCallback(t);});
 		return 0;
 	}
 
@@ -144,7 +144,7 @@ public class Client implements Runnable{
 
 	public void addOffer(String stockID, int q, double p,OfferType t){
 		StockOffer off = new StockOffer("", stockID, t, p, q);
-		cBroker.addOffer(stockID, off, (ts,tr) -> {transactionCallback(ts, tr);});
+		cBroker.addOffer(stockID, off, (tr) -> {transactionCallback(tr);});
 	}
 
 }
