@@ -65,7 +65,7 @@ public class IBrokerImpl implements IBroker {
 	@Override
 	public double getStockPrice(String stockID) {
 		Stock s = stocks.get(stockID);
-		return s.getPrice();
+		return s.getMinPrice();
 	}
 
 	@Override
@@ -94,7 +94,7 @@ public class IBrokerImpl implements IBroker {
 	@Override
 	public boolean subscribe(Stock stock) {
 		Stock val = stocks.put(stock.getID(), stock);
-		if(val != null)
+		if (val != null)
 			stock.setBroker(this);
 		return val == null;
 	}

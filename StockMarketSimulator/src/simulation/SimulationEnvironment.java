@@ -1,3 +1,5 @@
+package simulation;
+
 import client.Client;
 import clientbroker.ICBrokerImpl;
 import stock.Stock;
@@ -11,8 +13,8 @@ public class SimulationEnvironment {
     private int stock;
     private long timer;
     private boolean exit = false;
-    
-    public SimulationEnvironment (int client, int stock, long timer) {
+
+    public SimulationEnvironment(int client, int stock, long timer) {
         this.client = client;
         this.stock = stock;
         this.timer = timer;
@@ -20,7 +22,7 @@ public class SimulationEnvironment {
 
     public void run() {
 
-		Client[] client_array = new Client [client];
+        Client[] client_array = new Client[client];
         Stock[] stock_array = new Stock[stock];
         Thread[] client_threads = new Thread[client];
         Thread[] stock_threads = new Thread[stock];
@@ -39,49 +41,49 @@ public class SimulationEnvironment {
             ibroker.subscribe(stock_array[i]);
         }
 
-        for ( Thread t:stock_threads) {
+        for (Thread t : stock_threads) {
             t.start();
         }
-        
-        for ( Thread t:client_threads) {
+
+        for (Thread t : client_threads) {
             t.start();
         }
 
         long startTime = System.currentTimeMillis();
         long endTime = startTime;
 
-        while(endTime - startTime < timer * 1000){
+        while (endTime - startTime < timer * 1000) {
             System.out.println("is running...");
             endTime = System.currentTimeMillis();
         }
-        
+
         System.out.println("is stopped...");
 
-        for (Client c: client_array) {
+        for (Client c : client_array) {
             c.setRunning(false);
         }
 
-        for (Stock s: stock_array) {
+        for (Stock s : stock_array) {
             s.setRunning(false);
         }
 
-        for ( Thread t:stock_threads) {
+        for (Thread t : stock_threads) {
             try {
                 t.join();
             } catch (InterruptedException e) {
-                
+
                 e.printStackTrace();
             }
         }
-        
-        for ( Thread t:client_threads) {
+
+        for (Thread t : client_threads) {
             try {
                 t.join();
             } catch (InterruptedException e) {
-                
+
                 e.printStackTrace();
             }
         }
-	}
-    
+    }
+
 }

@@ -30,6 +30,8 @@ public class Stock {
 			new PriorityQueue<Offer>());
 	private MultiReadSingleWriteCollection<Transaction> transactionHistory = new MultiReadSingleWriteCollection<Transaction>(
 			new ArrayList<Transaction>());
+	private MultiReadSingleWriteCollection<Offer> offers = new MultiReadSingleWriteCollection<Offer>(
+			new PriorityQueue<Offer>());
 	private IBroker broker;
 	private Offer minSell;
 	private Offer maxBuy;
@@ -87,7 +89,7 @@ public class Stock {
 		System.out.println("Transaction was made:" + transaction);
 	}
 
-	public double getPrice() {
+	public double getMinPrice() {
 		return minSell.getPrice();
 	}
 
@@ -95,17 +97,18 @@ public class Stock {
 
 		System.out.println("stock " + ID + "adding offer " + offer);
 
+		offers.add(offer);
+
 		if (offer.getOfferType() == OfferType.BUY) {
-			buyOffers.add(offer);
 			System.out.println("offer added: " + offer.getID());
 			if (maxBuy == null)
 				maxBuy = offer;
 			else if (maxBuy.getPrice() < offer.getPrice())
-				// this.notify();
-				return true;
+				maxBuy = offer;
+			// this.notify();
+			return true;
 
 		} else if (offer.getOfferType() == OfferType.SELL) {
-			sellOffers.add(offer);
 			System.out.println("offer added: " + offer.getID());
 			if (minSell == null)
 				minSell = offer;
@@ -197,36 +200,15 @@ public class Stock {
 
 	public void cyclic() {
 
-		for (Offer sellOffer : sellOffers.getArray(oarr)) {
-			for (Offer buyOffer : buyOffers.getArray(oarr)) {
-				if (sellOffer.getPrice() <= buyOffer.getPrice())
-					makeTransaction(sellOffer, buyOffer);
-			}
-		}
+		// for (Offer sellOffer : sellOffers.getArray(oarr)) {
+		// for (Offer buyOffer : buyOffers.getArray(oarr)) {
+		// if (sellOffer.getPrice() <= buyOffer.getPrice())
+		// makeTransaction(sellOffer, buyOffer);
+		// }
+		// }
+		// 2 priorty q - unu de sell, unu de buy
+
 	}
-
-	// // Generate random string
-	// static String getAlphaNumericString(int n) {
-
-	// // chose a Character random from this String
-	// String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "0123456789" +
-	// "abcdefghijklmnopqrstuvxyz";
-
-	// // create StringBuffer size of AlphaNumericString
-	// StringBuilder sb = new StringBuilder(n);
-
-	// for (int i = 0; i < n; i++) {
-
-	// // generate a random number between
-	// // 0 to AlphaNumericString variable length
-	// int index = (int) (AlphaNumericString.length() * Math.random());
-
-	// // add Character one by one in end of sb
-	// sb.append(AlphaNumericString.charAt(index));
-	// }
-
-	// return sb.toString();
-	// }
 
 	public static void main(String args[]) {
 		Stock stock = new Stock("INTC");
@@ -279,6 +261,6 @@ public class Stock {
 		System.out.println("Gata");
 	}
 
-    public void setRunning(boolean b) {
-    }
+	public void setRunning(boolean b) {
+	}
 }
