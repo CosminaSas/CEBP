@@ -278,4 +278,7 @@ public class Stock {
 		// stock.running = false;
 		System.out.println("Gata");
 	}
+
+    public void setRunning(boolean b) {
+    }
 }
