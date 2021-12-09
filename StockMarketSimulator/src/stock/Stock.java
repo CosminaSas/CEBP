@@ -75,8 +75,11 @@ public class Stock {
 
 		// delete buy offer
 		buyOffers.delete(buyOffer);
+		offers.delete(buyOffer);
+
 		// delete sell offer
 		sellOffers.delete(sellOffer);
+		offers.delete(sellOffer);
 
 		// create transaction
 		Transaction transaction = new Transaction(sellOffer, buyOffer, this.ID);
@@ -207,7 +210,28 @@ public class Stock {
 		// }
 		// }
 		// 2 priorty q - unu de sell, unu de buy
+		// fac for - adaug in ce priory e - verific daca maketransaction - si dupa merg
+		// la urmatorul
+		PriorityQueue<Offer> offersBuy = new PriorityQueue<Offer>(new buyOfferComparator());
+		PriorityQueue<Offer> offersSell = new PriorityQueue<Offer>(new sellOfferComparator());
 
+		Offer[] allOffers = offers.getArray(oarr);
+
+		for (Offer offer : allOffers) {
+
+			if (offer.getOfferType() == OfferType.SELL) {
+				offersSell.add(offer);
+
+				if (offersBuy.peek().getPrice() > offer.getPrice())
+					makeTransaction(offer, offersBuy.peek());
+
+			} else if (offer.getOfferType() == OfferType.BUY) {
+				offersBuy.add(offer);
+
+				if (offer.getPrice() > offersSell.peek().getPrice())
+					makeTransaction(offersSell.peek(), offer);
+			}
+		}
 	}
 
 	public static void main(String args[]) {
