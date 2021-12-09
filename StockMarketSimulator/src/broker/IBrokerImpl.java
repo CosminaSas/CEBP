@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import common.OfferType;
 import stock.Stock;
 import stock.dtos.Offer;
 import stock.dtos.Transaction;
@@ -93,10 +94,11 @@ public class IBrokerImpl implements IBroker {
 
 	@Override
 	public boolean subscribe(Stock stock) {
-		Stock val = stocks.put(stock.getID(), stock);
-		if(val != null)
-			stock.setBroker(this);
-		return val == null;
+		if(stocks.get(stock.getID()) != null)
+			return false;
+		stocks.put(stock.getID(), stock);
+		stock.setBroker(this);
+		return true;
 	}
 
 	@Override
@@ -108,6 +110,19 @@ public class IBrokerImpl implements IBroker {
 	@Override
 	public int addTransaction(Offer newOffer,Transaction transaction) {
 		completedTransactions.add(transaction);
+		String nob = null,nos = null;
+		
+		if(newOffer != null){
+			if(newOffer.getOfferType() == OfferType.BUY)
+				nob = newOffer.getID();
+			if(newOffer.getOfferType() == OfferType.SELL)
+				nos = newOffer.getID();
+		}
+
+		transaction.getBuyOffer().getCallback().accept(nob, transaction);
+		
+		transaction.getSellOffer().getCallback().accept(nos, transaction);
+
 		synchronized (this) {
 			this.notify();
 		}

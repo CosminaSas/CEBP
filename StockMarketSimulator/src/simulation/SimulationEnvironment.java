@@ -1,6 +1,7 @@
 package simulation;
 import client.Client;
 import clientbroker.ICBrokerImpl;
+import common.OfferType;
 import stock.Stock;
 
 import broker.IBroker;
@@ -34,4 +35,27 @@ public class SimulationEnvironment {
             client_threads[i] = new Thread(clientarray[i]);
         }
 	}
+
+
+    public static void main(String[] args) {
+        Stock s = new Stock("INTC");
+
+        IBroker broker = new IBrokerImpl();
+
+        Client c1 = new Client("1", new ICBrokerImpl(broker, "1"));
+        Client c2 = new Client("2", new ICBrokerImpl(broker, "2"));
+
+        broker.subscribe(s);
+
+        c1.addOffer("INTC", 25, 100, OfferType.SELL);
+        c2.addOffer("INTC", 25, 100, OfferType.BUY);
+
+        s.cyclic();
+
+
+    }
+
+
+
+
 }

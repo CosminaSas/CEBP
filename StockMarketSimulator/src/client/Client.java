@@ -1,6 +1,7 @@
 package client;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -49,7 +50,8 @@ public class Client implements Runnable{
 	public Client(String id, ICBroker cBroker) {
 		this.id = id;
 		this.cBroker = cBroker;
-
+		ownedStocks = new HashMap<>();
+		this.pendingOffers = new ArrayList<>();
 		this.transactionHistory = new ArrayList<StockTransaction>();
 
 	}
@@ -129,6 +131,7 @@ public class Client implements Runnable{
 
 	public void addOffer(String stockID, int q, double p,OfferType t){
 		StockOffer off = new StockOffer("", stockID, t, p, q);
+		pendingOffers.add(off);
 		cBroker.addOffer(stockID, off, this.new OfferCallback(off));
 	}
 
