@@ -77,9 +77,21 @@ public class Stock {
 
 		// create transaction
 		Transaction transaction = new Transaction(sellOffer, buyOffer, this.ID);
+		int qdiff = buyOffer.getQuantity() - sellOffer.getQuantity();
 
+		Offer nOffer = null;
+
+		if(qdiff > 0){
+			nOffer = buyOffer.copy(qdiff);
+			buyOffers.add(nOffer);
+		}
+		if(qdiff < 0){
+			nOffer = sellOffer.copy(-qdiff);
+			sellOffers.add(nOffer);
+		}
+		
 		// add transaction
-		broker.addTransaction(transaction);
+		broker.addTransaction(nOffer,transaction);
 
 		// add transaction in transactionHistory
 		transactionHistory.add(transaction);

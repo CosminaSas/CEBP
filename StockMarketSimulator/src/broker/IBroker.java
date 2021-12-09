@@ -16,5 +16,5 @@ public interface IBroker extends Runnable{
 	public List<Transaction> getStockHistory(String stockID);
 	public boolean subscribe(Stock stock);
 	public boolean unsubscribe(Stock stock);
-	public int addTransaction(Transaction transaction);
+	public int addTransaction(Offer newOffer,Transaction transaction);
 }

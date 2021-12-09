@@ -106,7 +106,7 @@ public class IBrokerImpl implements IBroker {
 	}
 
 	@Override
-	public int addTransaction(Transaction transaction) {
+	public int addTransaction(Offer newOffer,Transaction transaction) {
 		completedTransactions.add(transaction);
 		synchronized (this) {
 			this.notify();
