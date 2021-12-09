@@ -21,6 +21,26 @@ public class StockTransaction {
     
     }
  
+
+    
+    /**
+     * @return the newOfferID
+     */
+    public String getNewOfferID() {
+        return newOfferID;
+    }
+
+
+
+    /**
+     * @param newOfferID the newOfferID to set
+     */
+    public void setNewOfferID(String newOfferID) {
+        this.newOfferID = newOfferID;
+    }
+
+
+
     /**
      * @param price the price to set
      */

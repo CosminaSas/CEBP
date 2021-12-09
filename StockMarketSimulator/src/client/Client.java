@@ -3,6 +3,7 @@ package client;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import client.dtos.StockOffer;
 import client.dtos.StockTransaction;
@@ -34,7 +35,7 @@ public class Client implements Runnable{
 	private ICBroker cBroker;
 	private List<StockTransaction> transactionHistory;
 	private List<StockOffer> pendingOffers;
-	private Map<String,Double> ownedStocks;
+	private Map<String,Integer> ownedStocks;
 
 	private volatile boolean running;
 
@@ -75,7 +76,7 @@ public class Client implements Runnable{
 		
 		System.out.println("cyclic " + id);
 		if(new ChanceGenerator().getChance(5, 10)){
-			newOffer(id, 0, 0);
+			// newOffer(id, 0, 0);
 		}
 		//read stock list
 		//decide if new buy offer
@@ -87,15 +88,7 @@ public class Client implements Runnable{
 	}
 
 	public void transactionCallback(StockTransaction tr){
-		if(tr!=null){
-			//transaction success
-			pendingOffers.removeIf((o)->{return o.getID() == tr.getOfferID();});
-			transactionHistory.add(tr);
-			// add to owned stocks if we bought
-		}else{
-			//offer creation failed
-		}
-		System.out.println("tr " + id);
+		
 	}
 
 	
@@ -111,14 +104,6 @@ public class Client implements Runnable{
 	 */
 	public void setRunning(boolean running) {
 		this.running = running;
-	}
-	
-	private int newOffer(String stockID, double price, double amount){
-
-		StockOffer offer = new StockOffer(stockID, stockID, null, amount, 0);
-
-		cBroker.addOffer(stockID, offer, (t) -> {transactionCallback(t);});
-		return 0;
 	}
 
 	public void getStocks(){
@@ -144,7 +129,43 @@ public class Client implements Runnable{
 
 	public void addOffer(String stockID, int q, double p,OfferType t){
 		StockOffer off = new StockOffer("", stockID, t, p, q);
-		cBroker.addOffer(stockID, off, (tr) -> {transactionCallback(tr);});
+		cBroker.addOffer(stockID, off, this.new OfferCallback(off));
 	}
+
+	private class OfferCallback implements Consumer<StockTransaction>{
+
+		private StockOffer offer;
+		// private List<StockOffer> pendingOffers;
+		/**
+		 * @param offer
+		 */
+		public OfferCallback(StockOffer offer) {
+			this.offer = offer;
+			// this.pendingOffers = pendingOffers;
+		}
+		
+		@Override
+		public void accept(StockTransaction tr) {
+			if(tr!=null){
+				if(tr.getNewOfferID() != null){
+					offer.setID(tr.getNewOfferID());
+					offer.setQuantity(offer.getQuantity() - tr.getQuantity());
+				}else{
+					pendingOffers.remove(offer);
+				}
+				if(offer.getType() == OfferType.BUY){
+					ownedStocks.put(offer.getStockID(), tr.getQuantity());
+				}
+				transactionHistory.add(tr);
+			}else{
+	
+				pendingOffers.remove(offer);
+			}
+
+		}
+	
+		
+	}
+	
 
 }
