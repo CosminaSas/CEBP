@@ -1,16 +1,16 @@
 package client;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import client.dtos.StockOffer;
 import client.dtos.StockTransaction;
 import clientbroker.ICBroker;
-import clientbroker.ICBrokerImpl;
 import common.ChanceGenerator;
+import common.MultiReadSingleWriteCollection;
 import common.OfferType;
 
 public class Client implements Runnable{
@@ -34,8 +34,8 @@ public class Client implements Runnable{
 
 	private String id;
 	private ICBroker cBroker;
-	private List<StockTransaction> transactionHistory;
-	private List<StockOffer> pendingOffers;
+	private MultiReadSingleWriteCollection<StockTransaction> transactionHistory;
+	private MultiReadSingleWriteCollection<StockOffer> pendingOffers;
 	private Map<String,Integer> ownedStocks;
 
 	private volatile boolean running;
@@ -50,9 +50,18 @@ public class Client implements Runnable{
 	public Client(String id, ICBroker cBroker) {
 		this.id = id;
 		this.cBroker = cBroker;
-		ownedStocks = new HashMap<>();
-		this.pendingOffers = new ArrayList<>();
-		this.transactionHistory = new ArrayList<StockTransaction>();
+		this.ownedStocks = new ConcurrentHashMap<String,Integer>();
+		this.pendingOffers = new MultiReadSingleWriteCollection<StockOffer>( new ArrayList<StockOffer>());
+		this.transactionHistory = new MultiReadSingleWriteCollection<StockTransaction>(new ArrayList<StockTransaction>());
+
+	}
+
+	public Client(String id, ICBroker cBroker,Map<String,Integer> ownedStocks) {
+		this.id = id;
+		this.cBroker = cBroker;
+		this.ownedStocks = new ConcurrentHashMap<String,Integer>(ownedStocks);
+		this.pendingOffers = new MultiReadSingleWriteCollection<StockOffer>( new ArrayList<StockOffer>());
+		this.transactionHistory = new MultiReadSingleWriteCollection<StockTransaction>(new ArrayList<StockTransaction>());
 
 	}
 
@@ -154,7 +163,7 @@ public class Client implements Runnable{
 					offer.setID(tr.getNewOfferID());
 					offer.setQuantity(offer.getQuantity() - tr.getQuantity());
 				}else{
-					pendingOffers.remove(offer);
+					pendingOffers.delete(offer);
 				}
 				if(offer.getType() == OfferType.BUY){
 					ownedStocks.put(offer.getStockID(), tr.getQuantity());
@@ -162,7 +171,7 @@ public class Client implements Runnable{
 				transactionHistory.add(tr);
 			}else{
 	
-				pendingOffers.remove(offer);
+				pendingOffers.delete(offer);
 			}
 
 		}
