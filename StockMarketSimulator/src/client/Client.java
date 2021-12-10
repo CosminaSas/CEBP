@@ -3,12 +3,14 @@ package client;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import client.dtos.StockOffer;
 import client.dtos.StockTransaction;
 import clientbroker.ICBroker;
-import clientbroker.ICBrokerImpl;
 import common.ChanceGenerator;
+import common.MultiReadSingleWriteCollection;
 import common.OfferType;
 
 public class Client implements Runnable{
@@ -32,9 +34,9 @@ public class Client implements Runnable{
 
 	private String id;
 	private ICBroker cBroker;
-	private List<StockTransaction> transactionHistory;
-	private List<StockOffer> pendingOffers;
-	private Map<String,Double> ownedStocks;
+	private MultiReadSingleWriteCollection<StockTransaction> transactionHistory;
+	private MultiReadSingleWriteCollection<StockOffer> pendingOffers;
+	private Map<String,Integer> ownedStocks;
 
 	private volatile boolean running;
 
@@ -48,8 +50,18 @@ public class Client implements Runnable{
 	public Client(String id, ICBroker cBroker) {
 		this.id = id;
 		this.cBroker = cBroker;
+		this.ownedStocks = new ConcurrentHashMap<String,Integer>();
+		this.pendingOffers = new MultiReadSingleWriteCollection<StockOffer>( new ArrayList<StockOffer>());
+		this.transactionHistory = new MultiReadSingleWriteCollection<StockTransaction>(new ArrayList<StockTransaction>());
 
-		this.transactionHistory = new ArrayList<StockTransaction>();
+	}
+
+	public Client(String id, ICBroker cBroker,Map<String,Integer> ownedStocks) {
+		this.id = id;
+		this.cBroker = cBroker;
+		this.ownedStocks = new ConcurrentHashMap<String,Integer>(ownedStocks);
+		this.pendingOffers = new MultiReadSingleWriteCollection<StockOffer>( new ArrayList<StockOffer>());
+		this.transactionHistory = new MultiReadSingleWriteCollection<StockTransaction>(new ArrayList<StockTransaction>());
 
 	}
 
@@ -75,7 +87,7 @@ public class Client implements Runnable{
 		
 		System.out.println("cyclic " + id);
 		if(new ChanceGenerator().getChance(5, 10)){
-			newOffer(id, 0, 0);
+			// newOffer(id, 0, 0);
 		}
 		//read stock list
 		//decide if new buy offer
@@ -86,16 +98,8 @@ public class Client implements Runnable{
 
 	}
 
-	public void transactionCallback(boolean trSucc, StockTransaction tr){
-		if(trSucc){
-			//transaction success
-			pendingOffers.removeIf((o)->{return o.getID() == tr.getOfferID();});
-			transactionHistory.add(tr);
-			// add to owned stocks if we bought
-		}else{
-			//offer creation failed
-		}
-		System.out.println("tr " + id);
+	public void transactionCallback(StockTransaction tr){
+		
 	}
 
 	
@@ -111,14 +115,6 @@ public class Client implements Runnable{
 	 */
 	public void setRunning(boolean running) {
 		this.running = running;
-	}
-	
-	private int newOffer(String stockID, double price, double amount){
-
-		StockOffer offer = new StockOffer(stockID, stockID, null, amount, 0);
-
-		cBroker.addOffer(stockID, offer, (Boolean s,StockTransaction t) -> {transactionCallback(s,t);});
-		return 0;
 	}
 
 	public void getStocks(){
@@ -144,7 +140,44 @@ public class Client implements Runnable{
 
 	public void addOffer(String stockID, int q, double p,OfferType t){
 		StockOffer off = new StockOffer("", stockID, t, p, q);
-		cBroker.addOffer(stockID, off, (ts,tr) -> {transactionCallback(ts, tr);});
+		pendingOffers.add(off);
+		cBroker.addOffer(stockID, off, this.new OfferCallback(off));
 	}
+
+	private class OfferCallback implements Consumer<StockTransaction>{
+
+		private StockOffer offer;
+		// private List<StockOffer> pendingOffers;
+		/**
+		 * @param offer
+		 */
+		public OfferCallback(StockOffer offer) {
+			this.offer = offer;
+			// this.pendingOffers = pendingOffers;
+		}
+		
+		@Override
+		public void accept(StockTransaction tr) {
+			if(tr!=null){
+				if(tr.getNewOfferID() != null){
+					offer.setID(tr.getNewOfferID());
+					offer.setQuantity(offer.getQuantity() - tr.getQuantity());
+				}else{
+					pendingOffers.delete(offer);
+				}
+				if(offer.getType() == OfferType.BUY){
+					ownedStocks.put(offer.getStockID(), tr.getQuantity());
+				}
+				transactionHistory.add(tr);
+			}else{
+	
+				pendingOffers.delete(offer);
+			}
+
+		}
+	
+		
+	}
+	
 
 }

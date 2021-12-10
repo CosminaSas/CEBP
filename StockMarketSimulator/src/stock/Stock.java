@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Vector;
 import java.util.function.BiConsumer;
 
 import broker.IBroker;
@@ -17,7 +16,7 @@ import stock.dtos.Transaction;
 public class Stock {
 
 	// testing purpose
-	private static final BiConsumer<Boolean, Transaction> callback = null;
+	private static final BiConsumer<String, Transaction> callback = null;
 	//
 	private static Offer[] oarr = new Offer[0];
 	private static Transaction[] tarr = new Transaction[0];
@@ -83,9 +82,21 @@ public class Stock {
 
 		// create transaction
 		Transaction transaction = new Transaction(sellOffer, buyOffer, this.ID);
+		int qdiff = buyOffer.getQuantity() - sellOffer.getQuantity();
 
+		Offer nOffer = null;
+
+		if(qdiff > 0){
+			nOffer = buyOffer.copy(qdiff);
+			buyOffers.add(nOffer);
+		}
+		if(qdiff < 0){
+			nOffer = sellOffer.copy(-qdiff);
+			sellOffers.add(nOffer);
+		}
+		
 		// add transaction
-		broker.addTransaction(transaction);
+		broker.addTransaction(nOffer,transaction);
 
 		// add transaction in transactionHistory
 		transactionHistory.add(transaction);

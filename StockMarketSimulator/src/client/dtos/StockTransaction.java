@@ -9,8 +9,9 @@ public class StockTransaction {
     private int quantity;
     private LocalDateTime timestamp;
     private String offerID;
+    private String newOfferID;
 
-    public StockTransaction (String stockId, String offerID,double price, int quantity, LocalDateTime timestamp) {
+    public StockTransaction (String stockId, String offerID,double price, int quantity,String newOfferID, LocalDateTime timestamp) {
 
         this.offerID = offerID;
         this.stockId = stockId;
@@ -19,9 +20,27 @@ public class StockTransaction {
         this.timestamp = timestamp;
     
     }
-
+ 
 
     
+    /**
+     * @return the newOfferID
+     */
+    public String getNewOfferID() {
+        return newOfferID;
+    }
+
+
+
+    /**
+     * @param newOfferID the newOfferID to set
+     */
+    public void setNewOfferID(String newOfferID) {
+        this.newOfferID = newOfferID;
+    }
+
+
+
     /**
      * @param price the price to set
      */
@@ -29,16 +48,12 @@ public class StockTransaction {
         this.price = price;
     }
 
-
-
     /**
      * @return the offerID
      */
     public String getOfferID() {
         return offerID;
     }
-
-
 
     /**
      * @param offerID the offerID to set

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import broker.IBroker;
 import client.dtos.StockOffer;
@@ -30,22 +31,22 @@ public class ICBrokerImpl implements ICBroker{
     }
 
     @Override
-	public boolean addOffer(String stockID, StockOffer offer, BiConsumer<Boolean, StockTransaction> callback) {
+	public boolean addOffer(String stockID, StockOffer offer, Consumer<StockTransaction> callback) {
         offer.setClientID(clientID);
         Offer serverOffer = stockOfferToOffer(offer,callback);
 		return broker.addOffer(serverOffer, stockID);
 	}
 	
-    private Offer stockOfferToOffer(StockOffer offer, BiConsumer<Boolean, StockTransaction> callback) {
-        Offer o = new Offer(offer.getClientID(),offer.getStockID() ,offer.getPrice(),offer.getQuantity(), offer.getType(), (ts,tr) -> {
-            StockTransaction str = transactionToStockTransaction(tr);
-            callback.accept(ts,str);
+    private Offer stockOfferToOffer(StockOffer offer, Consumer<StockTransaction> callback) {
+        Offer o = new Offer(offer.getClientID(),offer.getStockID() ,offer.getPrice(),offer.getQuantity(), offer.getType(), (no,tr) -> {
+            StockTransaction str = transactionToStockTransaction(no,tr);
+            callback.accept(str);
         });
         offer.setID(o.getID());
         return o;
     }
 
-    private StockTransaction transactionToStockTransaction(Transaction tr) {
+    private StockTransaction transactionToStockTransaction(String no,Transaction tr) {
 
         String oID;
 
@@ -54,7 +55,7 @@ public class ICBrokerImpl implements ICBroker{
         }else{
             oID = tr.getSellOffer().getID();
         }
-        return new StockTransaction(tr.getID(), oID ,tr.getPrice(),tr.getQuantity() , tr.getTimestamp());
+        return new StockTransaction(tr.getID(), oID ,tr.getPrice(),tr.getQuantity() ,no, tr.getTimestamp());
     }
 
     @Override
@@ -96,13 +97,13 @@ public class ICBrokerImpl implements ICBroker{
         List<Transaction> sHist = broker.getStockHistory(stockID);
         List<StockTransaction> hist = new ArrayList<>();
 
-        sHist.forEach((t) -> {hist.add(transactionToStockTransaction(t));});
+        sHist.forEach((t) -> {hist.add(transactionToStockTransaction(null,t));});
 
         return hist;
     }
 
     @Override
-    public String modifyOffer(String offerID, StockOffer newOffer,BiConsumer<Boolean,StockTransaction> callback) {
+    public String modifyOffer(String offerID, StockOffer newOffer,Consumer<StockTransaction> callback) {
         Offer serverOffer = stockOfferToOffer(newOffer,callback);
 		return broker.modifyOffer(newOffer.getStockId(), offerID, serverOffer);
     }

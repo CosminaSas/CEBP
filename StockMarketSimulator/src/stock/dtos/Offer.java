@@ -14,10 +14,10 @@ public final class Offer implements Comparable<Offer>{
     private final double price;
     private final int quantity;
     private final OfferType offerType;
-    private final BiConsumer<Boolean, Transaction> callback;
+    private final BiConsumer<String, Transaction> callback;
     private final long createdAt;
 
-    public Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<Boolean, Transaction> callback) {
+    public Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<String, Transaction> callback) {
         this.createdAt = System.currentTimeMillis();
         this.ID = Offer.IDs++ + "";
         this.stockID = stockID;
@@ -26,14 +26,30 @@ public final class Offer implements Comparable<Offer>{
         this.quantity = quantity;
         this.offerType = offerType;
         this.callback = callback;
-
     }
     
+    private Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<String, Transaction> callback,long createdAt) {
+        this.createdAt =createdAt;
+        this.ID = Offer.IDs++ + "";
+        this.stockID = stockID;
+        this.clientID = clientID;
+        this.price = price;
+        this.quantity = quantity;
+        this.offerType = offerType;
+        this.callback = callback;
+    }
+
+    public Offer copy(int quantity){
+        return new Offer(clientID, stockID, price, quantity, offerType, callback, createdAt);
+    }
+
+
+
 
     /**
      * @return the callback
      */
-    public BiConsumer<Boolean, Transaction> getCallback() {
+    public BiConsumer<String, Transaction> getCallback() {
         return callback;
     }
 
