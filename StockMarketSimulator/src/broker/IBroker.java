@@ -1,5 +1,6 @@
 package broker;
 
+import java.util.Collection;
 import java.util.List;
 
 import stock.Stock;
@@ -11,8 +12,8 @@ public interface IBroker extends Runnable{
 	public String modifyOffer(String stockID,String offerID, Offer newOffer);
 	public double getStockPrice(String stockID);
 	public List<String> getStockList();
-	public List<Offer> getOffers(String stockID);
-	public List<Transaction> getStockHistory(String stockID);
+	public Collection<Offer> getOffers(String stockID);
+	public Collection<Transaction> getStockHistory(String stockID);
 	public boolean subscribe(Stock stock);
 	public boolean unsubscribe(Stock stock);
 	public int addTransaction(Offer newOffer,Transaction transaction);

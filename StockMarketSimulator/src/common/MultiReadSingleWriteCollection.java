@@ -3,6 +3,7 @@ package common;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -69,7 +70,7 @@ public class MultiReadSingleWriteCollection<T> {
         @Override
         public void run() {
             for(int i = 0 ; i < 100; i++){
-                q.getArray(new Integer[0]);
+                q.getCollection();
             }
             
         }
@@ -87,6 +88,7 @@ public class MultiReadSingleWriteCollection<T> {
     private volatile boolean queing = false;
     private Condition qc;
     private Queue<T> writeQueue;
+    private Collection<T> collectionRep = Collections.unmodifiableCollection(Collections.emptyList());
 
 
     private void initLock(){
@@ -98,8 +100,14 @@ public class MultiReadSingleWriteCollection<T> {
         qc = queueLock.newCondition();
     }
 
+    private static <T> Collection<T> getUnmodifiableCopy(Collection<T> original){
+        Collection<T> copy = new ArrayList<T>(original);
+        return copy;
+    }
+
     public MultiReadSingleWriteCollection(Collection<T> ls){
         this.collection = ls;
+        this.collectionRep = getUnmodifiableCopy(ls);
         initLock();
     }
 
@@ -117,6 +125,7 @@ public class MultiReadSingleWriteCollection<T> {
         w.lock();
         try{
             collection.removeAll(Arrays.asList(elms));
+            collectionRep = getUnmodifiableCopy(collection);
         }finally{
             w.unlock();
         }
@@ -138,12 +147,14 @@ public class MultiReadSingleWriteCollection<T> {
         }finally{
             queueLock.unlock();
         }
+        logger.log("waiting to write");
         w.lock();
         try{
             queueLock.lock();
             try{
                 logger.log("write");
                 collection.addAll(writeQueue);
+                collectionRep = getUnmodifiableCopy(collection);
                 writeQueue.clear();
                 queing = false;
                 qc.signalAll();
@@ -155,10 +166,10 @@ public class MultiReadSingleWriteCollection<T> {
         }
     }
     
-    public T[] getArray(T[] a){
+    public Collection<T> getCollection(){
         r.lock();
         try{
-            return collection.toArray(a);
+            return collectionRep;
         }finally{
             r.unlock();
         }

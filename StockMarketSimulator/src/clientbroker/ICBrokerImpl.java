@@ -1,6 +1,7 @@
 package clientbroker;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -71,7 +72,7 @@ public class ICBrokerImpl implements ICBroker{
 
     @Override
     public List<StockOffer> getStockBuyOffers(String stockID) {
-        List<Offer> sOffers = broker.getOffers(stockID);
+        Collection<Offer> sOffers = broker.getOffers(stockID);
         List<StockOffer> offers = new ArrayList<>();
 
         sOffers.forEach((o) -> {
@@ -88,7 +89,7 @@ public class ICBrokerImpl implements ICBroker{
 
     @Override
     public List<StockOffer> getStockSellOffers(String stockID) {
-        List<Offer> sOffers = broker.getOffers(stockID);
+        Collection<Offer> sOffers = broker.getOffers(stockID);
         List<StockOffer> offers = new ArrayList<>();
 
         sOffers.forEach((o) -> {
@@ -101,7 +102,7 @@ public class ICBrokerImpl implements ICBroker{
 
     @Override
     public List<StockTransaction> getStockHistory(String stockID) {
-        List<Transaction> sHist = broker.getStockHistory(stockID);
+        Collection<Transaction> sHist = broker.getStockHistory(stockID);
         List<StockTransaction> hist = new ArrayList<>();
 
         sHist.forEach((t) -> {hist.add(transactionToStockTransaction(null,t));});

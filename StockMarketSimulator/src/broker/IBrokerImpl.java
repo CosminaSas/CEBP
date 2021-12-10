@@ -75,13 +75,13 @@ public class IBrokerImpl implements IBroker {
 	}
 
 	@Override
-	public List<Offer> getOffers(String stockID) {
+	public Collection<Offer> getOffers(String stockID) {
 		Stock s = stocks.get(stockID);
 		return s.getOffers();
 	}
 
 	@Override
-	public List<Transaction> getStockHistory(String stockID) {
+	public Collection<Transaction> getStockHistory(String stockID) {
 		Stock s = stocks.get(stockID);
 		return s.getTransactionHistory();
 	}

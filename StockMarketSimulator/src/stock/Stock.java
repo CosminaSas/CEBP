@@ -2,7 +2,7 @@ package stock;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.PriorityQueue;
 import java.util.function.BiConsumer;
 
@@ -16,17 +16,17 @@ import stock.dtos.Transaction;
 public class Stock {
 
 	// testing purpose
-	private static final BiConsumer<String, Transaction> callback = null;
-	//
-	private static Offer[] oarr = new Offer[0];
-	private static Transaction[] tarr = new Transaction[0];
+	private static final BiConsumer<String, Transaction> callback = new MockConsumer();
+	private static final Offer[] oarr = new Offer[0];
+	private static final Transaction[] tarr = new Transaction[0];
+
 
 	private volatile boolean running = true;
 	private String ID;
 	private MultiReadSingleWriteCollection<Transaction> transactionHistory = new MultiReadSingleWriteCollection<Transaction>(
 			new ArrayList<Transaction>());
 	private MultiReadSingleWriteCollection<Offer> offers = new MultiReadSingleWriteCollection<Offer>(
-			new PriorityQueue<Offer>());
+			new ArrayList<Offer>());
 	private IBroker broker;
 	private Offer minSell;
 	private Offer maxBuy;
@@ -44,12 +44,16 @@ public class Stock {
 		return ID;
 	}
 
-	public List<Offer> getOffers() {
-		return Arrays.asList(offers.getArray(oarr));
+	public Collection<Offer> getOffers() {
+		Offer[] os = offers.getCollection().toArray(oarr);
+		Arrays.sort(os);
+		return Arrays.asList(os);
 	}
 
-	public List<Transaction> getTransactionHistory() {
-		return Arrays.asList(transactionHistory.getArray(tarr));
+	public Collection<Transaction> getTransactionHistory() {
+		Transaction[] ts = transactionHistory.getCollection().toArray(tarr);
+		Arrays.sort(ts);
+		return Arrays.asList(ts);
 	}
 
 	public IBroker getBroker() {
@@ -62,7 +66,7 @@ public class Stock {
 
 	// Methods
 
-	public void makeTransaction(Offer sellOffer, Offer buyOffer) {
+	public Offer makeTransaction(Offer sellOffer, Offer buyOffer) {
 
 		// delete buy offer
 		offers.delete(new Offer[]{buyOffer,sellOffer});
@@ -88,6 +92,7 @@ public class Stock {
 		// add transaction in transactionHistory
 		transactionHistory.add(transaction);
 		System.out.println("Transaction was made:" + transaction);
+		return nOffer;
 	}
 
 	public double getMinPrice() {
@@ -124,7 +129,7 @@ public class Stock {
 
 	public int modifyOffer(String offerID, Offer newOffer) {
 
-		Offer[] off = offers.getArray(oarr);
+		Collection<Offer> off = offers.getCollection();
 		Offer old = Offer.getOfferForCompare(offerID);
 
 		offers.delete(old);
@@ -142,13 +147,13 @@ public class Stock {
 	}
 
 	// cu for
-	private Offer getMin(Offer[] offers) {
+	private Offer getMin(Collection<Offer> offers) {
 
-		double min_price = offers[0].getPrice();
-		Offer min_offer = offers[0];
+		double min_price = Double.MIN_VALUE;
+		Offer min_offer = null;
 
 		for (Offer offer : offers) {
-			if (min_price > offer.getPrice())
+			if (offer.getOfferType() == OfferType.SELL && min_price > offer.getPrice())
 				min_offer = offer;
 		}
 
@@ -174,6 +179,16 @@ public class Stock {
 		this.running = false;
 	}
 
+	private static class MockConsumer implements BiConsumer<String, Transaction>{
+
+		@Override
+		public void accept(String t, Transaction u) {
+			
+			
+		}
+
+	}
+
 	public void cyclic() {
 
 		// for (Offer sellOffer : sellOffers.getArray(oarr)) {
@@ -185,24 +200,73 @@ public class Stock {
 		// 2 priorty q - unu de sell, unu de buy
 		// fac for - adaug in ce priory e - verific daca maketransaction - si dupa merg
 		// la urmatorul
-		PriorityQueue<Offer> offersBuy = new PriorityQueue<Offer>(new buyOfferComparator());
-		PriorityQueue<Offer> offersSell = new PriorityQueue<Offer>(new sellOfferComparator());
+		PriorityQueue<Offer> offersBuy = new PriorityQueue<Offer>(new BuyOfferComparator());
+		PriorityQueue<Offer> offersSell = new PriorityQueue<Offer>(new SellOfferComparator());
 
-		Offer[] allOffers = offers.getArray(oarr);
-
+		Offer[] allOffers = offers.getCollection().toArray(oarr);
+		Arrays.sort(allOffers);
+		
 		for (Offer offer : allOffers) {
 
 			if (offer.getOfferType() == OfferType.SELL) {
-				offersSell.add(offer);
-
-				if (offersBuy.peek().getPrice() > offer.getPrice())
-					makeTransaction(offer, offersBuy.peek());
+					
+				Offer coff = offer;
+				Offer obuy = offersBuy.peek();
+				
+				while(coff != null){
+					if(obuy != null){
+						if(coff.getPrice() <= obuy.getPrice()){
+							Offer rem = makeTransaction(coff, offersBuy.poll());
+							if(rem != null){
+								if(rem.getOfferType() == OfferType.SELL){
+									coff = rem;
+								}else{
+									offersBuy.add(rem);
+									coff = null;
+								}
+							}else{
+								coff = null;
+							}
+						}else{
+							offersSell.add(coff);
+							coff = null;
+						}
+						obuy = offersBuy.peek();
+					}else{
+						offersSell.add(coff);
+						coff = null;
+					}
+				}
 
 			} else if (offer.getOfferType() == OfferType.BUY) {
-				offersBuy.add(offer);
-
-				if (offer.getPrice() > offersSell.peek().getPrice())
-					makeTransaction(offersSell.peek(), offer);
+				
+				Offer coff = offer;
+				Offer osell = offersSell.peek();
+				
+				while(coff != null){
+					if(osell != null){
+						if(coff.getPrice() >= osell.getPrice()){
+							Offer rem = makeTransaction(offersSell.poll(), coff);
+							if(rem != null){
+								if(rem.getOfferType() == OfferType.BUY){
+									coff = rem;
+								}else{
+									offersSell.add(rem);
+									coff = null;
+								}
+							}else{
+								coff = null;
+							}
+						}else{
+							offersBuy.add(coff);
+							coff = null;
+						}
+						osell = offersSell.peek();
+					}else{
+						offersBuy.add(coff);
+						coff = null;
+					}
+				}
 			}
 		}
 	}
@@ -212,26 +276,26 @@ public class Stock {
 		IBroker broker = new IBrokerImpl();
 		stock.setBroker(broker);
 
-		Offer buyOffer1 = new Offer("client1", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer sellOffer1 = new Offer("seller1", "123", 31.4, 1, OfferType.SELL, callback);
+		Offer sellOffer1 = new Offer("seller1", "123", 10.4, 1, OfferType.SELL, callback);
 		Offer sellOffer2 = new Offer("seller2", "123", 30.4, 3, OfferType.SELL, callback);
 		Offer sellOffer3 = new Offer("seller3", "123", 31.4, 1, OfferType.SELL, callback);
+		Offer buyOffer1 = new Offer("client1", "123", 31.4, 1, OfferType.BUY, callback);
 		Offer buyOffer2 = new Offer("client2", "123", 21.4, 6, OfferType.BUY, callback);
 		Offer buyOffer3 = new Offer("client3", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer buyOffer4 = new Offer("client4", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer sellOffer6 = new Offer("seller6", "123", 12.4, 1, OfferType.SELL, callback);
+		Offer sellOffer7 = new Offer("seller7", "123", 23.4, 1, OfferType.SELL, callback);
 		Offer buyOffer5 = new Offer("client5", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer sellOffer4 = new Offer("seller4", "123", 31.4, 1, OfferType.SELL, callback);
 		Offer buyOffer6 = new Offer("client6", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer sellOffer10 = new Offer("seller10", "123", 9.4, 9, OfferType.SELL, callback);
+		Offer buyOffer4 = new Offer("client4", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer sellOffer4 = new Offer("seller4", "123", 50.4, 1, OfferType.SELL, callback);
 		Offer buyOffer7 = new Offer("client7", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer sellOffer5 = new Offer("seller5", "123", 301.4, 10, OfferType.SELL, callback);
-		Offer sellOffer6 = new Offer("seller6", "123", 31.4, 1, OfferType.SELL, callback);
-		Offer sellOffer7 = new Offer("seller7", "123", 31.4, 1, OfferType.SELL, callback);
-		Offer sellOffer8 = new Offer("seller8", "123", 31.4, 1, OfferType.SELL, callback);
+		Offer sellOffer9 = new Offer("seller9", "123", 35.4, 1, OfferType.SELL, callback);
+		Offer sellOffer5 = new Offer("seller5", "123", 5.4, 10, OfferType.SELL, callback);
 		Offer buyOffer8 = new Offer("client8", "123", 310.4, 10, OfferType.BUY, callback);
 		Offer buyOffer9 = new Offer("client9", "123", 31.4, 1, OfferType.BUY, callback);
+		Offer sellOffer8 = new Offer("seller8", "123", 41.4, 1, OfferType.SELL, callback);
 		Offer buyOffer10 = new Offer("client10", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer sellOffer9 = new Offer("seller9", "123", 31.4, 1, OfferType.SELL, callback);
-		Offer sellOffer10 = new Offer("seller10", "123", 10.4, 9, OfferType.SELL, callback);
 
 		stock.addOffer(sellOffer1);
 		stock.addOffer(buyOffer1);
@@ -256,6 +320,9 @@ public class Stock {
 		stock.cyclic();
 		// stock.running = false;
 		System.out.println("Gata");
+
+		stock.getOffers().forEach((e)->{System.out.println(e);});
+		stock.getTransactionHistory().forEach((e)->{System.out.println(e);});
 	}
 
 	public void setRunning(boolean b) {

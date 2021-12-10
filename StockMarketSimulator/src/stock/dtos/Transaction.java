@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-public class Transaction {
+public class Transaction implements Comparable<Transaction>{
 
 	private static int IDs = 0;
 
@@ -16,7 +16,7 @@ public class Transaction {
 	private long createdAt;
 
 	public Transaction(Offer sellOffer, Offer buyOffer, String stockID) {
-		this.createdAt = System.currentTimeMillis();
+		this.createdAt = System.nanoTime();
 		this.ID = "" + Transaction.IDs++;
 		this.sellOffer = sellOffer;
 		this.buyOffer = buyOffer;
@@ -91,6 +91,29 @@ public class Transaction {
 		builder.append(timestamp);
 		builder.append("]");
 		return builder.toString();
+	}
+
+	/**
+	 * @return the createdAt
+	 */
+	public long getCreatedAt() {
+		return createdAt;
+	}
+
+	/**
+	 * @param createdAt the createdAt to set
+	 */
+	public void setCreatedAt(long createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	@Override
+	public int compareTo(Transaction o) {
+		if(this.createdAt < o.getCreatedAt())
+            return -1;
+        if(this.createdAt > o.getCreatedAt())
+            return 1;
+        return 0;
 	}
 
 }

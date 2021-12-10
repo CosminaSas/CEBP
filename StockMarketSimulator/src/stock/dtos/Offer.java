@@ -33,7 +33,7 @@ public final class Offer implements Comparable<Offer>{
     }
 
     public Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<String, Transaction> callback) {
-        this.createdAt = System.currentTimeMillis();
+        this.createdAt = System.nanoTime();
         this.ID = Offer.IDs++ + "";
         this.stockID = stockID;
         this.clientID = clientID;
@@ -94,6 +94,8 @@ public final class Offer implements Comparable<Offer>{
 		return stockID;
 	}
 
+   
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
@@ -103,10 +105,10 @@ public final class Offer implements Comparable<Offer>{
         StringBuilder builder = new StringBuilder();
         builder.append("Offer [ID=");
         builder.append(ID);
-        builder.append(", callback=");
-        builder.append(callback);
         builder.append(", clientID=");
         builder.append(clientID);
+        builder.append(", createdAt=");
+        builder.append(createdAt);
         builder.append(", offerType=");
         builder.append(offerType);
         builder.append(", price=");
