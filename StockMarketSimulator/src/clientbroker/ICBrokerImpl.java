@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import broker.IBroker;
 import client.dtos.StockOffer;
 import client.dtos.StockTransaction;
+import common.OfferType;
 import stock.Stock;
 import stock.dtos.Offer;
 import stock.dtos.Transaction;
@@ -70,10 +71,13 @@ public class ICBrokerImpl implements ICBroker{
 
     @Override
     public List<StockOffer> getStockBuyOffers(String stockID) {
-        List<Offer> sOffers = broker.getBuyOffers(stockID);
+        List<Offer> sOffers = broker.getOffers(stockID);
         List<StockOffer> offers = new ArrayList<>();
 
-        sOffers.forEach((o) -> {offers.add(offerToStockOffer(o));});
+        sOffers.forEach((o) -> {
+            if(o.getOfferType() == OfferType.BUY)
+                offers.add(offerToStockOffer(o));
+        });
 
         return offers;
     }
@@ -84,10 +88,13 @@ public class ICBrokerImpl implements ICBroker{
 
     @Override
     public List<StockOffer> getStockSellOffers(String stockID) {
-        List<Offer> sOffers = broker.getSellOffers(stockID);
+        List<Offer> sOffers = broker.getOffers(stockID);
         List<StockOffer> offers = new ArrayList<>();
 
-        sOffers.forEach((o) -> {offers.add(offerToStockOffer(o));});
+        sOffers.forEach((o) -> {
+            if(o.getOfferType() == OfferType.SELL)
+                offers.add(offerToStockOffer(o));
+        });
 
         return offers;
     }

@@ -17,6 +17,21 @@ public final class Offer implements Comparable<Offer>{
     private final BiConsumer<String, Transaction> callback;
     private final long createdAt;
 
+    public static Offer getOfferForCompare(String ID){
+        return new Offer(ID);
+    } 
+
+    private Offer(String ID){
+        this.createdAt = 0;
+        this.ID = ID;
+        this.stockID = null;
+        this.clientID = null;
+        this.price = 0;
+        this.quantity = 0;
+        this.offerType = null;
+        this.callback = null;
+    }
+
     public Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<String, Transaction> callback) {
         this.createdAt = System.currentTimeMillis();
         this.ID = Offer.IDs++ + "";
@@ -118,6 +133,41 @@ public final class Offer implements Comparable<Offer>{
         if(this.createdAt > o.getCreatedAt())
             return 1;
         return 0;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((ID == null) ? 0 : ID.hashCode());
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Offer)) {
+            return false;
+        }
+        Offer other = (Offer) obj;
+        if (ID == null) {
+            if (other.ID != null) {
+                return false;
+            }
+        } else if (!ID.equals(other.ID)) {
+            return false;
+        }
+        return true;
     }
 
 

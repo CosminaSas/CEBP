@@ -11,8 +11,7 @@ public interface IBroker extends Runnable{
 	public String modifyOffer(String stockID,String offerID, Offer newOffer);
 	public double getStockPrice(String stockID);
 	public List<String> getStockList();
-	public List<Offer> getBuyOffers(String stockID);
-	public List<Offer> getSellOffers(String stockID);
+	public List<Offer> getOffers(String stockID);
 	public List<Transaction> getStockHistory(String stockID);
 	public boolean subscribe(Stock stock);
 	public boolean unsubscribe(Stock stock);

@@ -23,10 +23,6 @@ public class Stock {
 
 	private volatile boolean running = true;
 	private String ID;
-	private MultiReadSingleWriteCollection<Offer> buyOffers = new MultiReadSingleWriteCollection<Offer>(
-			new PriorityQueue<Offer>());
-	private MultiReadSingleWriteCollection<Offer> sellOffers = new MultiReadSingleWriteCollection<Offer>(
-			new PriorityQueue<Offer>());
 	private MultiReadSingleWriteCollection<Transaction> transactionHistory = new MultiReadSingleWriteCollection<Transaction>(
 			new ArrayList<Transaction>());
 	private MultiReadSingleWriteCollection<Offer> offers = new MultiReadSingleWriteCollection<Offer>(
@@ -48,12 +44,8 @@ public class Stock {
 		return ID;
 	}
 
-	public List<Offer> getBuyOffers() {
-		return Arrays.asList(buyOffers.getArray(oarr));
-	}
-
-	public List<Offer> getSellOffers() {
-		return Arrays.asList(sellOffers.getArray(oarr));
+	public List<Offer> getOffers() {
+		return Arrays.asList(offers.getArray(oarr));
 	}
 
 	public List<Transaction> getTransactionHistory() {
@@ -73,12 +65,7 @@ public class Stock {
 	public void makeTransaction(Offer sellOffer, Offer buyOffer) {
 
 		// delete buy offer
-		buyOffers.delete(buyOffer);
-		offers.delete(buyOffer);
-
-		// delete sell offer
-		sellOffers.delete(sellOffer);
-		offers.delete(sellOffer);
+		offers.delete(new Offer[]{buyOffer,sellOffer});
 
 		// create transaction
 		Transaction transaction = new Transaction(sellOffer, buyOffer, this.ID);
@@ -88,11 +75,11 @@ public class Stock {
 
 		if(qdiff > 0){
 			nOffer = buyOffer.copy(qdiff);
-			buyOffers.add(nOffer);
+			offers.add(nOffer);
 		}
 		if(qdiff < 0){
 			nOffer = sellOffer.copy(-qdiff);
-			sellOffers.add(nOffer);
+			offers.add(nOffer);
 		}
 		
 		// add transaction
@@ -136,31 +123,18 @@ public class Stock {
 	}
 
 	public int modifyOffer(String offerID, Offer newOffer) {
-		if (newOffer.getOfferType() == OfferType.BUY) {
-			Offer[] offersBuy = buyOffers.getArray(oarr);
-			for (Offer offer : offersBuy) {
-				if (offer.getID() == offerID) {
-					buyOffers.delete(offer);
-					buyOffers.add(newOffer);
-					if (maxBuy.getID() == offerID) {
-						maxBuy = getMax(offersBuy);
-					}
-					this.notify();
-					return 1;
-				}
-			}
-		} else if (newOffer.getOfferType() == OfferType.SELL) {
-			Offer[] offersSell = sellOffers.getArray(oarr);
-			for (Offer offer : offersSell) {
-				if (offer.getID() == offerID) {
-					sellOffers.delete(offer);
-					sellOffers.add(newOffer);
-					if (minSell.getID() == offerID) {
-						minSell = getMin(offersSell);
-					}
-					this.notify();
-					return 1;
-				}
+
+		Offer[] off = offers.getArray(oarr);
+		Offer old = Offer.getOfferForCompare(offerID);
+
+		offers.delete(old);
+		offers.add(newOffer);
+
+
+
+		if (newOffer.getOfferType() == OfferType.SELL) {
+			if (minSell.getID() == offerID) {
+				minSell = getMin(off);
 			}
 		}
 
@@ -179,18 +153,6 @@ public class Stock {
 		}
 
 		return min_offer;
-	}
-
-	private Offer getMax(Offer[] offers) {
-		double max_price = offers[0].getPrice();
-		Offer max_offer = offers[0];
-
-		for (Offer offer : offers) {
-			if (max_price < offer.getPrice())
-				max_offer = offer;
-		}
-
-		return max_offer;
 	}
 
 	public void run() {
