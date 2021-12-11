@@ -128,6 +128,31 @@ public class Client implements Runnable{
 		// 	System.out.println("Decided to modify stock ... ");
 		// }
 
+		// for(StockOffer o: pendingOffers){
+
+		// 	double price = cBroker.getStockPrice(o.getStockId());
+
+
+		// 	if((price - o.getPrice()) > price/10){
+		// 		modifyOffer(o,price);
+		// 	}
+
+
+		// }
+
+
+		//for(StockOffer o : pendingOffers){
+			 //modify => delete
+		// if(new ChanceGenerator().getChance(5, 10)){
+
+		// 	 int stockIndex = new Random().nextInt(ownedStocks.size());
+
+		// 	 if ((o.getPrice() - ((StockOffer) pendingOffers).getPrice()) > 110/100 ) {
+		// 		modifyOffer(stocks.get(stockIndex), o);
+		// 	}
+		// }
+			
+		// }
 		for(StockOffer o: pendingOffers){
 
 			double price = cBroker.getStockPrice(o.getStockId());
@@ -137,22 +162,15 @@ public class Client implements Runnable{
 				modifyOffer(o,price);
 			}
 
-
 		}
+	}
 
+	private void modifyOffer(StockOffer o, double price) {
+		
+		pendingOffers.remove(o);
+		StockOffer no = newOffer(o.getStockID(), (price + price*0.1)  , o.getQuantity(), null);
+		cBroker.modifyOffer(o.getID(), no, (Boolean s,StockTransaction t) -> {transactionCallback(s,t);});
 
-		//for(StockOffer o : pendingOffers){
-			 //modify => delete
-		if(new ChanceGenerator().getChance(5, 10)){
-
-			 int stockIndex = new Random().nextInt(ownedStocks.size());
-
-			 if ((o.getPrice() - ((StockOffer) pendingOffers).getPrice()) > 110/100 ) {
-				modifyOffer(stocks.get(stockIndex), o);
-			}
-		}
-			
-		// }
 	}
 
 	public void transactionCallback(boolean trSucc, StockTransaction tr){
@@ -182,14 +200,16 @@ public class Client implements Runnable{
 		this.running = running;
 	}
 	
-	private int newOffer(String stockID, double price, int amount, OfferType type){
+	private StockOffer newOffer(String stockID, double price, int amount, OfferType type){
 
 		StockOffer offer = new StockOffer(stockID, stockID, type, price, amount);
 		offer.setClientID(id);
 		cBroker.addOffer(stockID, offer, (Boolean s,StockTransaction t) -> {transactionCallback(s,t);});
 		pendingOffers.add(offer);
+		
+		return offer;
 
-		return 0;
+		//return 0;
 	}
 
 	public void getStocks(){
@@ -230,13 +250,6 @@ public class Client implements Runnable{
 	// 			}
 	// }
 
-	private void modifyoffer(StockOffer o, double price) {
-
-		pendingOffers.remove(o);
-		StockOffer no = newOffer(o.getStockID(),/*faci corectia de pret*/ price  , o.getQuantity());
-		cBroker.modifyOffer(o.getID(), no, (Boolean s,StockTransaction t) -> {transactionCallback(s,t);});
-
-
-	}
+	
 
 }
