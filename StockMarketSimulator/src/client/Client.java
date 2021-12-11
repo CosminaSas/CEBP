@@ -128,6 +128,18 @@ public class Client implements Runnable{
 		// 	System.out.println("Decided to modify stock ... ");
 		// }
 
+		for(StockOffer o: pendingOffers){
+
+			double price = cBroker.getStockPrice(o.getStockId());
+
+
+			if((price - o.getPrice()) > price/10){
+				modifyOffer(o,price);
+			}
+
+
+		}
+
 
 		//for(StockOffer o : pendingOffers){
 			 //modify => delete
@@ -206,16 +218,25 @@ public class Client implements Runnable{
 		cBroker.addOffer(stockID, off, (ts,tr) -> {transactionCallback(ts, tr);});
 	}
 
-	public void modifyOffer(StockOffer oldOffer, StockOffer newOffer){
+	// public void modifyOffer(StockOffer oldOffer, StockOffer newOffer){
 		
-				for (StockOffer offer : pendingOffers) {
-					if (offer.getID() == oldOffer.getID()) {
-						pendingOffers.remove(oldOffer);
-						pendingOffers.add(newOffer);
-						double price = oldOffer.getPrice() * 110 /100;
-						newOffer.setPrice(price);
-					}
-				}
+	// 			for (StockOffer offer : pendingOffers) {
+	// 				if (offer.getID() == oldOffer.getID()) {
+	// 					pendingOffers.remove(oldOffer);
+	// 					pendingOffers.add(newOffer);
+	// 					double price = oldOffer.getPrice() * 110 /100;
+	// 					newOffer.setPrice(price);
+	// 				}
+	// 			}
+	// }
+
+	private void modifyoffer(StockOffer o, double price) {
+
+		pendingOffers.remove(o);
+		StockOffer no = newOffer(o.getStockID(),/*faci corectia de pret*/ price  , o.getQuantity());
+		cBroker.modifyOffer(o.getID(), no, (Boolean s,StockTransaction t) -> {transactionCallback(s,t);});
+
+
 	}
 
 }
