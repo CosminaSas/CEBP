@@ -96,10 +96,16 @@ public class Client implements Runnable{
 		if(new ChanceGenerator().getChance(5, 10)){
 			int stockIndex = new Random().nextInt(stocks.size());
 			double stockPrice = cBroker.getStockPrice(stocks.get(stockIndex));
-			newOffer(stocks.get(stockIndex), stockPrice, 1, OfferType.BUY);
+			if(stockPrice < 0){
+				System.out.println("There are no offers for  " + stockIndex);
+				return;
+			}
+			else {
+			newOffer(stocks.get(stockIndex), stockPrice, 1, OfferType.BUY);		
 			System.out.println("Decided to buy stock " + stocks.get(stockIndex) + " at price " + stockPrice);
+			}						
 		}
-				
+		
 		//decide if new sell offer for owned stocks
 		//	* get buy offer list
 		if(new ChanceGenerator().getChance(5, 10)){
@@ -108,6 +114,12 @@ public class Client implements Runnable{
 			newOffer(stocks.get(stockIndex), stockPrice, 1, OfferType.BUY);
 			System.out.println("Decided to sell stock " + ownedStocks.get(stockIndex) + " at price " + stockPrice);
 		}
+		//if(cBroker.getStockPrice(stocks.get(stockIndex)) < 0){
+//
+		//	System.out.println("There are no offers for  " + stockIndex);
+		//	param.setPrice = random()
+		//	return;
+		//}
 
 		//decide if offer modification is necesarry
 		// //if(new ChanceGenerator().getChance(5, 10)){
@@ -116,8 +128,17 @@ public class Client implements Runnable{
 		// 	System.out.println("Decided to modify stock ... ");
 		// }
 
-		// for(StockOffer o : pendingOffers){
-		// 	if() //modify => delete
+
+		//for(StockOffer o : pendingOffers){
+			 //modify => delete
+		if(new ChanceGenerator().getChance(5, 10)){
+
+			 int stockIndex = new Random().nextInt(ownedStocks.size());
+
+			 if ((o.getPrice() - ((StockOffer) pendingOffers).getPrice()) > 110/100 ) {
+				modifyOffer(stocks.get(stockIndex), o);
+			}
+		}
 			
 		// }
 	}
@@ -187,37 +208,14 @@ public class Client implements Runnable{
 
 	public void modifyOffer(StockOffer oldOffer, StockOffer newOffer){
 		
-		// System.out.println("Enter the stock ID you want to modify: " + stockID);
-		// stockID.getStockId();
-		// new_p = stockID.getPrice() * 110/100;
-
-		// System.out.println("Type the new price: " + new_p);
-		// p.setPrice(new_p);
-		//cBroker.modifyOffer(stockID)
-
-		// pendingOffers.remove(stockID);
-		//
-
-		// if( oldOffer.getType() == OfferType.SELL)
-		// {
-			for (StockOffer offer : pendingOffers) {
-				if (offer.getID() == oldOffer.getID()) {
-					pendingOffers.remove(oldOffer);
-					pendingOffers.add(newOffer);
-					double price = oldOffer.getPrice() * 110 /100;
-					newOffer.setPrice(price);
+				for (StockOffer offer : pendingOffers) {
+					if (offer.getID() == oldOffer.getID()) {
+						pendingOffers.remove(oldOffer);
+						pendingOffers.add(newOffer);
+						double price = oldOffer.getPrice() * 110 /100;
+						newOffer.setPrice(price);
+					}
 				}
-			}
-		// }
-		// else if ( oldOffer.getType() == OfferType.BUY)
-		// {
-		// 	for (StockOffer offer : pendingOffers) {
-		// 		if (offer.getID() == oldOffer.getID()) {
-		// 			pendingOffers.remove(oldOffer);
-		// 			pendingOffers.add(newOffer);
-		// 		}
-		// 	}
-		// }
 	}
 
 }
