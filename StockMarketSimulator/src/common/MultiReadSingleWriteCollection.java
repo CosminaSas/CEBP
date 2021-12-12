@@ -36,7 +36,6 @@ public class MultiReadSingleWriteCollection<T> {
         }});
 
         q.collection.forEach((i)->{Logger.log(null,i+"");});
-
     }
 
     private static class WR implements Runnable{
@@ -99,8 +98,7 @@ public class MultiReadSingleWriteCollection<T> {
     }
 
     private static <T> Collection<T> getUnmodifiableCopy(Collection<T> original){
-        Collection<T> copy = new ArrayList<T>(original);
-        return copy;
+        return Collections.unmodifiableCollection(new ArrayList<T>(original));
     }
 
     public MultiReadSingleWriteCollection(Collection<T> ls){
