@@ -3,6 +3,7 @@ package stock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.PriorityQueue;
 import java.util.function.BiConsumer;
 
@@ -71,6 +72,9 @@ public class Stock implements Runnable{
 		// delete buy offer
 		offers.delete(new Offer[]{buyOffer,sellOffer});
 
+		if(sellOffer == minSell)
+			minSell = getMin(offers.getCollection());
+
 		// create transaction
 		Transaction transaction = new Transaction(sellOffer, buyOffer, this.ID,buyOffer.getPrice(),Math.min(sellOffer.getQuantity(), buyOffer.getQuantity()));
 		int qdiff = buyOffer.getQuantity() - sellOffer.getQuantity();
@@ -91,7 +95,7 @@ public class Stock implements Runnable{
 
 		// add transaction in transactionHistory
 		transactionHistory.add(transaction);
-		Logger.log(this,"Transaction was made:" + transaction);
+		Logger.log(ID,"Transaction was made:" + transaction);
 		return nOffer;
 	}
 
@@ -101,18 +105,22 @@ public class Stock implements Runnable{
 		return -1;
 	}
 
+	public void deleteOffers(List<Offer> offers2) {
+		offers.delete(offers2.toArray(oarr));
+	}
+
 	public boolean addOffer(Offer offer) {
 
-		Logger.log(this,"stock " + ID + "adding offer " + offer);
+		Logger.log(ID,"stock " + ID + "adding offer " + offer);
 
 		offers.add(offer);
 
 		if (offer.getOfferType() == OfferType.BUY) {
-			Logger.log(this,"offer added: " + offer.getID());
+			Logger.log(ID,"offer added: " + offer.getID());
 			return true;
 
 		} else if (offer.getOfferType() == OfferType.SELL) {
-			Logger.log(this,"offer added: " + offer.getID());
+			Logger.log(ID,"offer added: " + offer.getID());
 			if (minSell == null)
 				minSell = offer;
 			else if (minSell.getPrice() > offer.getPrice())
@@ -187,7 +195,7 @@ public class Stock implements Runnable{
 	
 	public void cyclic() {
 
-		Logger.log(this,"cyclic stock " + ID);
+		// Logger.log(ID,"cyclic stock " + ID);
 		PriorityQueue<Offer> offersBuy = new PriorityQueue<Offer>(new BuyOfferComparator());
 		PriorityQueue<Offer> offersSell = new PriorityQueue<Offer>(new SellOfferComparator());
 
@@ -319,4 +327,6 @@ public class Stock implements Runnable{
 		stock.getOffers().forEach((e)->{Logger.log(null,e.toString());});
 		stock.getTransactionHistory().forEach((e)->{Logger.log(null,e.toString());});
 	}
+
+	
 }

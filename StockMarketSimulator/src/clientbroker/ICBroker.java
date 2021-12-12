@@ -15,5 +15,6 @@ public interface ICBroker {
     public List<StockOffer>  getStockSellOffers(String stockID);
     public List<StockTransaction> getStockHistory(String stockID);
     public String modifyOffer(String offerID, StockOffer newOffer,Consumer<StockTransaction> callback);
+    public boolean deleteOffer(List<String> offerIDs,String stockID);
 
 }

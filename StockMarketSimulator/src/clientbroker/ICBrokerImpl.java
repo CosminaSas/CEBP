@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import broker.IBroker;
 import client.dtos.StockOffer;
@@ -118,6 +119,13 @@ public class ICBrokerImpl implements ICBroker{
     public String modifyOffer(String offerID, StockOffer newOffer,Consumer<StockTransaction> callback) {
         Offer serverOffer = stockOfferToOffer(newOffer,callback);
 		return broker.modifyOffer(newOffer.getStockId(), offerID, serverOffer);
+    }
+
+    @Override
+    public boolean deleteOffer(List<String> offerIDs,String stockID) {
+        List<Offer> offers = offerIDs.stream().map((id)->{return Offer.getOfferForCompare(id);}).collect(Collectors.toList());
+        broker.deleteOffer(offers,stockID);
+        return true;
     }
 }
 

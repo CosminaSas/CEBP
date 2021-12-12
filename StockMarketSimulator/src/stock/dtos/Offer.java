@@ -6,7 +6,7 @@ import common.OfferType;
 
 public final class Offer implements Comparable<Offer>{
 
-    private static int IDs = 0;
+    private volatile static Integer IDs = 0;
 
     private final String ID; // sau string??
     private final String clientID; // sau string??
@@ -34,7 +34,9 @@ public final class Offer implements Comparable<Offer>{
 
     public Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<String, Transaction> callback) {
         this.createdAt = System.nanoTime();
-        this.ID = Offer.IDs++ + "";
+        synchronized(Offer.IDs){
+            this.ID = Offer.IDs++ + "";
+        }
         this.stockID = stockID;
         this.clientID = clientID;
         this.price = price;
@@ -45,7 +47,9 @@ public final class Offer implements Comparable<Offer>{
     
     private Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<String, Transaction> callback,long createdAt) {
         this.createdAt =createdAt;
-        this.ID = Offer.IDs++ + "";
+        synchronized(Offer.IDs){
+            this.ID = Offer.IDs++ + "";
+        }
         this.stockID = stockID;
         this.clientID = clientID;
         this.price = price;

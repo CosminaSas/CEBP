@@ -67,7 +67,7 @@ public class SimulationEnvironment implements Runnable{
         long startTime = System.currentTimeMillis();
         long endTime = startTime;
 
-        Logger.log(this,"simulation started");
+        Logger.log("SIM","simulation started");
 
         while (endTime - startTime < timer * 1000) {
             endTime = System.currentTimeMillis();
@@ -76,7 +76,7 @@ public class SimulationEnvironment implements Runnable{
         //map client
         //initializare cu id 
 
-        Logger.log(this,"is stopped...");
+        Logger.log("SIM","is stopped...");
 
         for (Client c : client_array) {
             c.setRunning(false);

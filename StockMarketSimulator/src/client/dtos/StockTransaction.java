@@ -27,6 +27,9 @@ public class StockTransaction {
  
 
     
+  
+
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
@@ -46,9 +49,14 @@ public class StockTransaction {
         builder.append(stockId);
         builder.append(", timestamp=");
         builder.append(timestamp);
+        builder.append(", type=");
+        builder.append(type);
         builder.append("]");
         return builder.toString();
     }
+
+
+
 
 
 

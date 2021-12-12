@@ -38,13 +38,13 @@ public class IBrokerImpl implements IBroker {
 	}
 
 	private synchronized void cyclic() {
-		Logger.log(this,"cyclic");
+		Logger.log("BROKER","cyclic");
 		if (completedTransactions.size() > 0) {
 
 			synchronized (completedTransactions) {
 				transactions.addAll(completedTransactions);
 				completedTransactions.forEach((t) -> {
-					Logger.log(this,"transaction copied " + t.getID());
+					Logger.log("BROKER","transaction copied " + t.getID());
 				});
 				completedTransactions.clear();
 			}
@@ -136,6 +136,12 @@ public class IBrokerImpl implements IBroker {
 	 */
 	public void setRunning(boolean running) {
 		this.running = running;
+	}
+
+	@Override
+	public void deleteOffer(List<Offer> offers,String stockID) {
+		Stock s = stocks.get(stockID);
+		s.deleteOffers(offers);
 	}
 
 }

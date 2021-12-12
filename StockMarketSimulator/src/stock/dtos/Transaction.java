@@ -8,7 +8,7 @@ import javax.swing.text.html.HTMLDocument.HTMLReader.PreAction;
 
 public class Transaction implements Comparable<Transaction>{
 
-	private static int IDs = 0;
+	private volatile static Integer IDs = 0;
 
 	private final String ID;
 	private final Offer sellOffer;
@@ -23,13 +23,15 @@ public class Transaction implements Comparable<Transaction>{
 
 	public Transaction(Offer sellOffer, Offer buyOffer, String stockID,double price, int quantity) {
 		this.createdAt = System.nanoTime();
-		this.ID = "" + Transaction.IDs++;
+		this.timestamp = LocalDateTime.now();
+		synchronized(Transaction.IDs){
+			this.ID = "" + Transaction.IDs++;
+		}
 		this.sellOffer = sellOffer;
 		this.buyOffer = buyOffer;
 		this.stockID = stockID;
 		this.price = price;
 		this.quantity = quantity;
-		this.timestamp = Instant.ofEpochMilli(createdAt).atZone(ZoneId.systemDefault()).toLocalDateTime();
 	}
 
 	public String getID() {

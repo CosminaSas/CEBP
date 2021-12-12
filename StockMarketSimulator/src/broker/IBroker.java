@@ -17,4 +17,5 @@ public interface IBroker extends Runnable{
 	public boolean subscribe(Stock stock);
 	public boolean unsubscribe(Stock stock);
 	public int addTransaction(Offer newOffer,Transaction transaction);
+	public void deleteOffer(List<Offer> offers,String stockID);
 }
