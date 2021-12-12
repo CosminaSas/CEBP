@@ -41,13 +41,33 @@ public class ICBrokerImpl implements ICBroker{
 	}
 	
     private Offer stockOfferToOffer(StockOffer offer, Consumer<StockTransaction> callback) {
-        Offer o = new Offer(offer.getClientID(),offer.getStockID() ,offer.getPrice(),offer.getQuantity(), offer.getType(), (no,tr) -> {
-            StockTransaction str = transactionToStockTransaction(no,tr);
-            callback.accept(str);
-        });
+        Offer o = new Offer(offer.getClientID(),offer.getStockID() ,offer.getPrice(),offer.getQuantity(), offer.getType(), new Callback(callback));
         offer.setID(o.getID());
         return o;
     }
+
+    private class Callback implements BiConsumer<String, Transaction>{
+
+        private Consumer<StockTransaction> callback;
+
+        /**
+         * @param callback
+         */
+        public Callback(Consumer<StockTransaction> callback) {
+            this.callback = callback;
+        }
+
+
+
+        @Override
+        public void accept(String no, Transaction tr) {
+            StockTransaction str = transactionToStockTransaction(no,tr);
+            callback.accept(str);
+            
+        }
+
+    }
+
 
     private StockTransaction transactionToStockTransaction(String no,Transaction tr) {
 
@@ -62,7 +82,7 @@ public class ICBrokerImpl implements ICBroker{
             oID = tr.getSellOffer().getID();
             tp = OfferType.SELL;
         }
-        return new StockTransaction(tr.getStockID(), oID ,tr.getPrice(),tr.getQuantity() ,no,tp, tr.getTimestamp());
+        return new StockTransaction(tr.getID(),tr.getStockID(), oID ,tr.getPrice(),tr.getQuantity() ,no,tp, tr.getTimestamp());
     }
 
     @Override
@@ -117,6 +137,7 @@ public class ICBrokerImpl implements ICBroker{
 
     @Override
     public String modifyOffer(String offerID, StockOffer newOffer,Consumer<StockTransaction> callback) {
+        newOffer.setClientID(clientID);
         Offer serverOffer = stockOfferToOffer(newOffer,callback);
 		return broker.modifyOffer(newOffer.getStockId(), offerID, serverOffer);
     }

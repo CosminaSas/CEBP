@@ -70,7 +70,7 @@ public class Stock implements Runnable{
 	public Offer makeTransaction(Offer sellOffer, Offer buyOffer) {
 
 		// delete buy offer
-		offers.delete(new Offer[]{buyOffer,sellOffer});
+		offers.delete(buyOffer,sellOffer);
 
 		if(sellOffer == minSell)
 			minSell = getMin(offers.getCollection());
@@ -111,7 +111,7 @@ public class Stock implements Runnable{
 
 	public boolean addOffer(Offer offer) {
 
-		Logger.log(ID,"stock " + ID + "adding offer " + offer);
+		Logger.log(ID,"stock " + ID + " adding offer " + offer);
 
 		offers.add(offer);
 
@@ -133,10 +133,11 @@ public class Stock implements Runnable{
 	}
 
 	public int modifyOffer(String offerID, Offer newOffer) {
-
+		Logger.log(ID, "Deleteing offer with ID="+offerID + " adding offer " + newOffer);
 		Offer old = Offer.getOfferForCompare(offerID);
 
 		offers.delete(old);
+
 		offers.add(newOffer);
 		Collection<Offer> off = offers.getCollection();
 

@@ -104,6 +104,7 @@ public class IBrokerImpl implements IBroker {
 
 	@Override
 	public int addTransaction(Offer newOffer,Transaction transaction) {
+		
 		completedTransactions.add(transaction);
 		String nob = null,nos = null;
 		
@@ -118,9 +119,9 @@ public class IBrokerImpl implements IBroker {
 		
 		transaction.getSellOffer().getCallback().accept(nos, transaction);
 
-		synchronized (this) {
-			this.notify();
-		}
+		// synchronized (this) {
+		// 	this.notify();
+		// }
 		return 0;
 	}
 

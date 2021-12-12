@@ -6,6 +6,7 @@ import common.OfferType;
 
 public class StockTransaction {
 
+    private String trID;
     private String stockId;
     private Double price;
     private int quantity;
@@ -14,21 +15,16 @@ public class StockTransaction {
     private String newOfferID;
     private OfferType type;
 
-    public StockTransaction (String stockId, String offerID,double price, int quantity,String newOfferID,OfferType type, LocalDateTime timestamp) {
-
+    public StockTransaction (String trID,String stockId, String offerID,double price, int quantity,String newOfferID,OfferType type, LocalDateTime timestamp) {
+        this.trID = trID;
         this.offerID = offerID;
         this.stockId = stockId;
         this.price = price;
         this.quantity = quantity;
         this.type = type;
         this.timestamp = timestamp;
-    
+        this.newOfferID = newOfferID;
     }
- 
-
-    
-  
-
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -37,8 +33,8 @@ public class StockTransaction {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("StockTransaction [newOfferID=");
-        builder.append(newOfferID);
+        builder.append("StockTransaction [trID=");
+        builder.append(trID);
         builder.append(", offerID=");
         builder.append(offerID);
         builder.append(", price=");
@@ -49,11 +45,20 @@ public class StockTransaction {
         builder.append(stockId);
         builder.append(", timestamp=");
         builder.append(timestamp);
+        builder.append(", newOfferID=");
+        builder.append(newOfferID);
         builder.append(", type=");
         builder.append(type);
         builder.append("]");
         return builder.toString();
     }
+
+
+
+
+
+
+
 
 
 
@@ -132,4 +137,8 @@ public class StockTransaction {
 	public void setTimestamp(LocalDateTime timestamp) {
 		this.timestamp = timestamp;
 	}
+
+    public String getID() {
+        return trID;
+    }
 }

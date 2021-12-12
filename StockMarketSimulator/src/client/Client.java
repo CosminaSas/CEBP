@@ -115,9 +115,9 @@ public class Client implements Runnable{
 				//get its price
 				double stockPrice = cBroker.getStockPrice(stocks.get(stockIndex));
 							
-				Logger.log(ID, "Stock " + stocks.get(stockIndex) + " price " + stockPrice);
+				// Logger.log(ID, "Stock " + stocks.get(stockIndex) + " price " + stockPrice);
 				if(stockPrice < 0){
-					Logger.log(ID,"There are no offers for  " + stocks.get(stockIndex));
+					// Logger.log(ID,"There are no offers for  " + stocks.get(stockIndex));
 					if(ownedStocks.get(stocks.get(stockIndex)) != null){
 						deleteBuyOffers(stocks.get(stockIndex));
 					}
@@ -147,7 +147,7 @@ public class Client implements Runnable{
 				if(!haveBuyOffer(stockID)){
 					//get the price of the stock
 					double stockPrice = cBroker.getStockPrice(stockID);
-					Logger.log(ID, "Stock " + stockID + " price " + stockPrice);
+					// Logger.log(ID, "Stock " + stockID + " price " + stockPrice);
 					double price = stockPrice;
 					int nostocks = 1;
 
@@ -206,11 +206,17 @@ public class Client implements Runnable{
 
 	private void modifyOffer(StockOffer o, double price) {
 		
-		pendingOffers.delete(o);
-		StockOffer no = newOffer(o.getStockID(), (price + price*0.1)  , o.getQuantity(), o.getType());
-		Logger.log(ID,"Decided to modify offer " + o);
+		
+		if(o.getType() == OfferType.SELL){
+			ownedStocks.compute(o.getStockID(), (id,val)->{return ((val == null)?0:val) + o.getQuantity();});
+		}
+		price += ((new Random().nextDouble() - 0.5)/10) *price;
+		StockOffer no = new StockOffer(o.getID(),o.getStockID(),o.getType(),price,o.getQuantity());
 		cBroker.modifyOffer(o.getID(), no, this.new OfferCallback(no));
+		pendingOffers.delete(o);
 		pendingOffers.add(no);
+		Logger.log(ID,"Decided to modify offer " + o + "with " + no);
+		
 
 	}
 
@@ -278,6 +284,7 @@ public class Client implements Runnable{
 		
 		@Override
 		public void accept(StockTransaction tr) {
+			Logger.log(ID, "Transaction " + tr+ " for offer " + offer);
 			if(tr!=null){
 				if(tr.getNewOfferID() != null){
 					offer.setID(tr.getNewOfferID());
