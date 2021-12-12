@@ -5,6 +5,11 @@ import clientbroker.ICBrokerImpl;
 import common.OfferType;
 import stock.Stock;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import broker.IBroker;
 import broker.IBrokerImpl;
 
@@ -13,12 +18,18 @@ public class SimulationEnvironment {
     private int client;
     private int stock;
     private long timer;
-    private boolean exit = false;
+    private String[] clientIDs;
+    private String[] stockIDs;
 
-    public SimulationEnvironment(int client, int stock, long timer) {
+    private List<Stock> stock_list;
+    private List<Client> client_list;
+
+    public SimulationEnvironment(int client, int stock, long timer, List<Stock> stock_list, List<Client> client_list) {
         this.client = client;
         this.stock = stock;
         this.timer = timer;
+        stock_list = new ArrayList<>();
+        client_list = new ArrayList<>();
     }
 
     public void run() {
@@ -31,13 +42,13 @@ public class SimulationEnvironment {
         IBroker ibroker = new IBrokerImpl();
 
         for (int i = 0; i < client; i++) {
-            client_array[i] = new Client(i + "", new ICBrokerImpl(ibroker, i + ""));
+            client_array[i] = new Client((clientIDs[i]), new ICBrokerImpl(ibroker, clientIDs[i]));
             client_threads[i] = new Thread(client_array[i]);
         }
 
         for (int i = 0; i < stock; i++) {
 
-            stock_array[i] = new Stock(i + "");
+            stock_array[i] = new Stock(stockIDs[i]);
             stock_threads[i] = new Thread();
             ibroker.subscribe(stock_array[i]);
         }
@@ -56,7 +67,12 @@ public class SimulationEnvironment {
         while (endTime - startTime < timer * 1000) {
             System.out.println("is running...");
             endTime = System.currentTimeMillis();
+
+        
         }
+
+        //map client
+        //initializare cu id 
 
         System.out.println("is stopped...");
 
