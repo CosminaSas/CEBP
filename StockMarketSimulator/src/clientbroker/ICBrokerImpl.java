@@ -51,13 +51,17 @@ public class ICBrokerImpl implements ICBroker{
     private StockTransaction transactionToStockTransaction(String no,Transaction tr) {
 
         String oID;
+        OfferType tp;
+
 
         if(tr.getBuyOffer().getClientID().equals(clientID)){
             oID = tr.getBuyOffer().getID();
+            tp = OfferType.BUY;
         }else{
             oID = tr.getSellOffer().getID();
+            tp = OfferType.SELL;
         }
-        return new StockTransaction(tr.getID(), oID ,tr.getPrice(),tr.getQuantity() ,no, tr.getTimestamp());
+        return new StockTransaction(tr.getStockID(), oID ,tr.getPrice(),tr.getQuantity() ,no,tp, tr.getTimestamp());
     }
 
     @Override

@@ -2,6 +2,8 @@ package client.dtos;
 
 import java.time.LocalDateTime;
 
+import common.OfferType;
+
 public class StockTransaction {
 
     private String stockId;
@@ -10,19 +12,46 @@ public class StockTransaction {
     private LocalDateTime timestamp;
     private String offerID;
     private String newOfferID;
+    private OfferType type;
 
-    public StockTransaction (String stockId, String offerID,double price, int quantity,String newOfferID, LocalDateTime timestamp) {
+    public StockTransaction (String stockId, String offerID,double price, int quantity,String newOfferID,OfferType type, LocalDateTime timestamp) {
 
         this.offerID = offerID;
         this.stockId = stockId;
         this.price = price;
         this.quantity = quantity;
+        this.type = type;
         this.timestamp = timestamp;
     
     }
  
 
     
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("StockTransaction [newOfferID=");
+        builder.append(newOfferID);
+        builder.append(", offerID=");
+        builder.append(offerID);
+        builder.append(", price=");
+        builder.append(price);
+        builder.append(", quantity=");
+        builder.append(quantity);
+        builder.append(", stockId=");
+        builder.append(stockId);
+        builder.append(", timestamp=");
+        builder.append(timestamp);
+        builder.append("]");
+        return builder.toString();
+    }
+
+
+
     /**
      * @return the newOfferID
      */

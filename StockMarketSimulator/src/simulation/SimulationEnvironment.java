@@ -2,6 +2,7 @@ package simulation;
 
 import client.Client;
 import clientbroker.ICBrokerImpl;
+import common.Logger;
 import common.OfferType;
 import stock.Stock;
 
@@ -13,25 +14,27 @@ import java.util.concurrent.ConcurrentHashMap;
 import broker.IBroker;
 import broker.IBrokerImpl;
 
-public class SimulationEnvironment {
+public class SimulationEnvironment implements Runnable{
 
     private int client;
     private int stock;
     private long timer;
-    private String[] clientIDs;
-    private String[] stockIDs;
+    private List<String> clientIDs;
+    private List<String> stockIDs;
+    private boolean output;
+    private List<Map<String,Integer>> ownedStocks;
 
-    private List<Stock> stock_list;
-    private List<Client> client_list;
-
-    public SimulationEnvironment(int client, int stock, long timer, List<Stock> stock_list, List<Client> client_list) {
+    public SimulationEnvironment(int client, int stock, long timer, List<String> stockIDs, List<String> clientIDs,List<Map<String,Integer>> ownedStocks,boolean output) {
         this.client = client;
         this.stock = stock;
         this.timer = timer;
-        stock_list = new ArrayList<>();
-        client_list = new ArrayList<>();
+        this.clientIDs = clientIDs;
+        this.stockIDs = stockIDs;
+        this.ownedStocks = ownedStocks;
+        this.output = output;
     }
 
+    @Override
     public void run() {
 
         Client[] client_array = new Client[client];
@@ -42,14 +45,14 @@ public class SimulationEnvironment {
         IBroker ibroker = new IBrokerImpl();
 
         for (int i = 0; i < client; i++) {
-            client_array[i] = new Client((clientIDs[i]), new ICBrokerImpl(ibroker, clientIDs[i]));
+            client_array[i] = new Client(clientIDs.get(i), new ICBrokerImpl(ibroker, clientIDs.get(i)),ownedStocks.get(i));
             client_threads[i] = new Thread(client_array[i]);
         }
 
         for (int i = 0; i < stock; i++) {
 
-            stock_array[i] = new Stock(stockIDs[i]);
-            stock_threads[i] = new Thread();
+            stock_array[i] = new Stock(stockIDs.get(i));
+            stock_threads[i] = new Thread(stock_array[i]);
             ibroker.subscribe(stock_array[i]);
         }
 
@@ -64,17 +67,16 @@ public class SimulationEnvironment {
         long startTime = System.currentTimeMillis();
         long endTime = startTime;
 
-        while (endTime - startTime < timer * 1000) {
-            System.out.println("is running...");
-            endTime = System.currentTimeMillis();
+        Logger.log(this,"simulation started");
 
-        
+        while (endTime - startTime < timer * 1000) {
+            endTime = System.currentTimeMillis();
         }
 
         //map client
         //initializare cu id 
 
-        System.out.println("is stopped...");
+        Logger.log(this,"is stopped...");
 
         for (Client c : client_array) {
             c.setRunning(false);
@@ -84,45 +86,29 @@ public class SimulationEnvironment {
             s.setRunning(false);
         }
 
-        for (Thread t : stock_threads) {
-            try {
-                t.join();
-            } catch (InterruptedException e) {
-
-                e.printStackTrace();
-            }
-        }
-
         for (Thread t : client_threads) {
             try {
                 t.join();
             } catch (InterruptedException e) {
-
                 e.printStackTrace();
             }
         }
-    }
 
+        for (Thread t : stock_threads) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
-    public static void main(String[] args) {
-        Stock s = new Stock("INTC");
+        
+        for (Client client : client_array) {
+            client.printInfo();
+        }
 
-        IBroker broker = new IBrokerImpl();
-
-        Client c1 = new Client("1", new ICBrokerImpl(broker, "1"));
-        Client c2 = new Client("2", new ICBrokerImpl(broker, "2"));
-
-        broker.subscribe(s);
-
-        c1.addOffer("INTC", 25, 100, OfferType.SELL);
-        c2.addOffer("INTC", 25, 100, OfferType.BUY);
-
-        s.cyclic();
 
 
     }
-
-
-
 
 }

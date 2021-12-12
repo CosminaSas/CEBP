@@ -16,8 +16,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class MultiReadSingleWriteCollection<T> {
 
-    private static Logger logger = new Logger(MultiReadSingleWriteCollection.class);
-
     public static void main(String[] args) {
         MultiReadSingleWriteCollection<Integer> q = new MultiReadSingleWriteCollection<Integer> (new PriorityQueue<Integer>());
         List<Thread> runnables = new ArrayList<>();
@@ -37,7 +35,7 @@ public class MultiReadSingleWriteCollection<T> {
             e.printStackTrace();
         }});
 
-        q.collection.forEach((i)->{logger.log(i+"");});
+        q.collection.forEach((i)->{Logger.log(null,i+"");});
 
     }
 
@@ -136,7 +134,6 @@ public class MultiReadSingleWriteCollection<T> {
         try{
             writeQueue.add(e);
             while(queing){
-                logger.log("wait");
                 qc.await();
             }
             if(writeQueue.isEmpty())
@@ -147,12 +144,10 @@ public class MultiReadSingleWriteCollection<T> {
         }finally{
             queueLock.unlock();
         }
-        logger.log("waiting to write");
         w.lock();
         try{
             queueLock.lock();
             try{
-                logger.log("write");
                 collection.addAll(writeQueue);
                 collectionRep = getUnmodifiableCopy(collection);
                 writeQueue.clear();

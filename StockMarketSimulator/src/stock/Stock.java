@@ -8,12 +8,13 @@ import java.util.function.BiConsumer;
 
 import broker.IBroker;
 import broker.IBrokerImpl;
+import common.Logger;
 import common.MultiReadSingleWriteCollection;
 import common.OfferType;
 import stock.dtos.Offer;
 import stock.dtos.Transaction;
 
-public class Stock {
+public class Stock implements Runnable{
 
 	// testing purpose
 	private static final BiConsumer<String, Transaction> callback = new MockConsumer();
@@ -21,7 +22,7 @@ public class Stock {
 	private static final Transaction[] tarr = new Transaction[0];
 
 
-	private volatile boolean running = true;
+	private volatile Boolean running = false;
 	private String ID;
 	private MultiReadSingleWriteCollection<Transaction> transactionHistory = new MultiReadSingleWriteCollection<Transaction>(
 			new ArrayList<Transaction>());
@@ -29,7 +30,6 @@ public class Stock {
 			new ArrayList<Offer>());
 	private IBroker broker;
 	private Offer minSell;
-	private Offer maxBuy;
 
 	/**
 	 * @param iD
@@ -72,7 +72,7 @@ public class Stock {
 		offers.delete(new Offer[]{buyOffer,sellOffer});
 
 		// create transaction
-		Transaction transaction = new Transaction(sellOffer, buyOffer, this.ID);
+		Transaction transaction = new Transaction(sellOffer, buyOffer, this.ID,buyOffer.getPrice(),Math.min(sellOffer.getQuantity(), buyOffer.getQuantity()));
 		int qdiff = buyOffer.getQuantity() - sellOffer.getQuantity();
 
 		Offer nOffer = null;
@@ -91,31 +91,28 @@ public class Stock {
 
 		// add transaction in transactionHistory
 		transactionHistory.add(transaction);
-		System.out.println("Transaction was made:" + transaction);
+		Logger.log(this,"Transaction was made:" + transaction);
 		return nOffer;
 	}
 
 	public double getMinPrice() {
-		return minSell.getPrice();
+		if(minSell != null)
+			return minSell.getPrice();
+		return -1;
 	}
 
 	public boolean addOffer(Offer offer) {
 
-		System.out.println("stock " + ID + "adding offer " + offer);
+		Logger.log(this,"stock " + ID + "adding offer " + offer);
 
 		offers.add(offer);
 
 		if (offer.getOfferType() == OfferType.BUY) {
-			System.out.println("offer added: " + offer.getID());
-			if (maxBuy == null)
-				maxBuy = offer;
-			else if (maxBuy.getPrice() < offer.getPrice())
-				maxBuy = offer;
-			// this.notify();
+			Logger.log(this,"offer added: " + offer.getID());
 			return true;
 
 		} else if (offer.getOfferType() == OfferType.SELL) {
-			System.out.println("offer added: " + offer.getID());
+			Logger.log(this,"offer added: " + offer.getID());
 			if (minSell == null)
 				minSell = offer;
 			else if (minSell.getPrice() > offer.getPrice())
@@ -129,12 +126,11 @@ public class Stock {
 
 	public int modifyOffer(String offerID, Offer newOffer) {
 
-		Collection<Offer> off = offers.getCollection();
 		Offer old = Offer.getOfferForCompare(offerID);
 
 		offers.delete(old);
 		offers.add(newOffer);
-
+		Collection<Offer> off = offers.getCollection();
 
 
 		if (newOffer.getOfferType() == OfferType.SELL) {
@@ -149,7 +145,7 @@ public class Stock {
 	// cu for
 	private Offer getMin(Collection<Offer> offers) {
 
-		double min_price = Double.MIN_VALUE;
+		double min_price = -1;
 		Offer min_offer = null;
 
 		for (Offer offer : offers) {
@@ -160,14 +156,20 @@ public class Stock {
 		return min_offer;
 	}
 
+	@Override
 	public void run() {
-		running = true;
+		synchronized(running){
+			running = true;
+		}
 
-		while (running) {
+		while (true) {
+			synchronized(running){
+				if(running == false) break;
+			}
 			cyclic();
 			synchronized (this) {
 				try {
-					this.wait(1);
+					this.wait(100);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -175,31 +177,17 @@ public class Stock {
 		}
 	}
 
-	public void stopRunning() {
-		this.running = false;
-	}
 
-	private static class MockConsumer implements BiConsumer<String, Transaction>{
-
-		@Override
-		public void accept(String t, Transaction u) {
-			
-			
+	public void setRunning(boolean b) {
+		synchronized(running){
+			running = b;
 		}
-
 	}
 
+	
 	public void cyclic() {
 
-		// for (Offer sellOffer : sellOffers.getArray(oarr)) {
-		// for (Offer buyOffer : buyOffers.getArray(oarr)) {
-		// if (sellOffer.getPrice() <= buyOffer.getPrice())
-		// makeTransaction(sellOffer, buyOffer);
-		// }
-		// }
-		// 2 priorty q - unu de sell, unu de buy
-		// fac for - adaug in ce priory e - verific daca maketransaction - si dupa merg
-		// la urmatorul
+		Logger.log(this,"cyclic stock " + ID);
 		PriorityQueue<Offer> offersBuy = new PriorityQueue<Offer>(new BuyOfferComparator());
 		PriorityQueue<Offer> offersSell = new PriorityQueue<Offer>(new SellOfferComparator());
 
@@ -270,6 +258,13 @@ public class Stock {
 			}
 		}
 	}
+	
+	private static class MockConsumer implements BiConsumer<String, Transaction>{
+		@Override
+		public void accept(String t, Transaction u) {			
+		}
+
+	}
 
 	public static void main(String args[]) {
 		Stock stock = new Stock("INTC");
@@ -319,12 +314,9 @@ public class Stock {
 		stock.addOffer(sellOffer10);
 		stock.cyclic();
 		// stock.running = false;
-		System.out.println("Gata");
+		Logger.log(null,"Gata");
 
-		stock.getOffers().forEach((e)->{System.out.println(e);});
-		stock.getTransactionHistory().forEach((e)->{System.out.println(e);});
-	}
-
-	public void setRunning(boolean b) {
+		stock.getOffers().forEach((e)->{Logger.log(null,e.toString());});
+		stock.getTransactionHistory().forEach((e)->{Logger.log(null,e.toString());});
 	}
 }

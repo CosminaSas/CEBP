@@ -4,23 +4,31 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+import javax.swing.text.html.HTMLDocument.HTMLReader.PreAction;
+
 public class Transaction implements Comparable<Transaction>{
 
 	private static int IDs = 0;
 
-	private String ID;
-	private Offer sellOffer;
-	private Offer buyOffer;
-	private String stockID;
-	private LocalDateTime timestamp;
-	private long createdAt;
+	private final String ID;
+	private final Offer sellOffer;
+	private final Offer buyOffer;
+	private final String stockID;
+	private final LocalDateTime timestamp;
+	private final long createdAt;
+	private final double price;
+	private final int quantity;
 
-	public Transaction(Offer sellOffer, Offer buyOffer, String stockID) {
+
+
+	public Transaction(Offer sellOffer, Offer buyOffer, String stockID,double price, int quantity) {
 		this.createdAt = System.nanoTime();
 		this.ID = "" + Transaction.IDs++;
 		this.sellOffer = sellOffer;
 		this.buyOffer = buyOffer;
 		this.stockID = stockID;
+		this.price = price;
+		this.quantity = quantity;
 		this.timestamp = Instant.ofEpochMilli(createdAt).atZone(ZoneId.systemDefault()).toLocalDateTime();
 	}
 
@@ -28,48 +36,29 @@ public class Transaction implements Comparable<Transaction>{
 		return ID;
 	}
 
-	public void setID(String iD) {
-		ID = iD;
-	}
-
 	public Offer getSellOffer() {
 		return sellOffer;
-	}
-
-	public void setSellOffer(Offer sellOffer) {
-		this.sellOffer = sellOffer;
 	}
 
 	public Offer getBuyOffer() {
 		return buyOffer;
 	}
 
-	public void setBuyOffer(Offer buyOffer) {
-		this.buyOffer = buyOffer;
-	}
-
 	public String getStockID() {
 		return stockID;
 	}
 
-	public void setStockID(String stockID) {
-		this.stockID = stockID;
-	}
 
 	public LocalDateTime getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(LocalDateTime timestamp) {
-		this.timestamp = timestamp;
-	}
-
 	public double getPrice() {
-		return 0;
+		return price;
 	}
 
 	public int getQuantity() {
-		return 0;
+		return quantity;
 	}
 
 	/* (non-Javadoc)
@@ -100,12 +89,6 @@ public class Transaction implements Comparable<Transaction>{
 		return createdAt;
 	}
 
-	/**
-	 * @param createdAt the createdAt to set
-	 */
-	public void setCreatedAt(long createdAt) {
-		this.createdAt = createdAt;
-	}
 
 	@Override
 	public int compareTo(Transaction o) {

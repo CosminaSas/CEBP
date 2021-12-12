@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import common.Logger;
 import common.OfferType;
 import stock.Stock;
 import stock.dtos.Offer;
@@ -37,13 +38,13 @@ public class IBrokerImpl implements IBroker {
 	}
 
 	private synchronized void cyclic() {
-		System.out.println("cyclic");
+		Logger.log(this,"cyclic");
 		if (completedTransactions.size() > 0) {
 
 			synchronized (completedTransactions) {
 				transactions.addAll(completedTransactions);
 				completedTransactions.forEach((t) -> {
-					System.out.println("transaction copied " + t.getID());
+					Logger.log(this,"transaction copied " + t.getID());
 				});
 				completedTransactions.clear();
 			}
