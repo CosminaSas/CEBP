@@ -3,12 +3,10 @@ package broker;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import common.Logger;
 import common.OfferType;
 import stock.Stock;
 import stock.dtos.Offer;
@@ -18,38 +16,7 @@ public class IBrokerImpl implements IBroker {
 
 	private volatile boolean running;
 	private Map<String, Stock> stocks = new ConcurrentHashMap<String, Stock>();
-	private List<Transaction> transactions = new ArrayList<>();
 	private List<Transaction> completedTransactions = Collections.synchronizedList(new ArrayList<>());
-
-	@Override
-	public void run() {
-		running = true;
-		while (running) {
-			cyclic();
-			synchronized (this) {
-				try {
-					this.wait(1000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
-	}
-
-	private synchronized void cyclic() {
-		Logger.log("BROKER","cyclic");
-		if (completedTransactions.size() > 0) {
-
-			synchronized (completedTransactions) {
-				transactions.addAll(completedTransactions);
-				completedTransactions.forEach((t) -> {
-					Logger.log("BROKER","transaction copied " + t.getID());
-				});
-				completedTransactions.clear();
-			}
-		}
-	}
 
 	@Override
 	public boolean addOffer(Offer offer, String stockID) {

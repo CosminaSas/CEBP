@@ -3,8 +3,6 @@ package clientbroker;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -13,14 +11,11 @@ import broker.IBroker;
 import client.dtos.StockOffer;
 import client.dtos.StockTransaction;
 import common.OfferType;
-import stock.Stock;
 import stock.dtos.Offer;
 import stock.dtos.Transaction;
 
 public class ICBrokerImpl implements ICBroker{
 
-	private Map<String, Stock> stocks = new ConcurrentHashMap<String, Stock>(); //client-stock, broker=stocks?
-	private List<StockTransaction> transactions = new ArrayList<>();
     private IBroker broker;
     private String clientID;
 
@@ -35,7 +30,6 @@ public class ICBrokerImpl implements ICBroker{
 
     @Override
 	public boolean addOffer(String stockID, StockOffer offer, Consumer<StockTransaction> callback) {
-        offer.setClientID(clientID);
         Offer serverOffer = stockOfferToOffer(offer,callback);
 		return broker.addOffer(serverOffer, stockID);
 	}
@@ -109,7 +103,7 @@ public class ICBrokerImpl implements ICBroker{
     }
 
     private StockOffer offerToStockOffer(Offer o) {
-        return new StockOffer(o.getID(), o.getStockID(), o.getOfferType(), o.getPrice(), o.getQuantity());
+        return new StockOffer(o.getID(),clientID,o.getStockID(), o.getOfferType(), o.getPrice(), o.getQuantity());
     }
 
     @Override
@@ -137,7 +131,6 @@ public class ICBrokerImpl implements ICBroker{
 
     @Override
     public String modifyOffer(String offerID, StockOffer newOffer,Consumer<StockTransaction> callback) {
-        newOffer.setClientID(clientID);
         Offer serverOffer = stockOfferToOffer(newOffer,callback);
 		return broker.modifyOffer(newOffer.getStockId(), offerID, serverOffer);
     }

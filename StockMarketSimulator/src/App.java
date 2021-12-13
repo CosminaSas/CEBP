@@ -13,6 +13,8 @@ public class App {
         List<Map<String,Integer>> os = new ArrayList<>();
 
         stocks.add("INTC");
+        stocks.add("META");
+        stocks.add("AMZN");
 
         clients.add("c1");
         clients.add("c2");
@@ -27,13 +29,18 @@ public class App {
 
         c1 = new HashMap<>();
         c1.put("INTC",  5);
+        c1.put("META", 20);
         c2 = new HashMap<>();
         c2.put("INTC", 10);
         c3 = new HashMap<>();
         c4 = new HashMap<>();
         c5 = new HashMap<>();
         c6 = new HashMap<>();
+        c6.put("AMZN", 30);
         c7 = new HashMap<>();
+        c7.put("AMZN", 10);
+        c7.put("META", 10);
+        c7.put("INTC", 10);
         c8 = new HashMap<>();
 
         os.add(c1);
@@ -45,7 +52,7 @@ public class App {
         os.add(c7);
         os.add(c8);
 
-        SimulationEnvironment sim = new SimulationEnvironment(8, 1, 60L, stocks ,clients, os,true);
+        SimulationEnvironment sim = new SimulationEnvironment(8, 3, 30L, stocks ,clients, os,true);
 
         Thread tsim = new Thread(sim);
 

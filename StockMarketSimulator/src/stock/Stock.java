@@ -11,6 +11,7 @@ import broker.IBroker;
 import broker.IBrokerImpl;
 import common.Logger;
 import common.MultiReadSingleWriteCollection;
+import common.MultiReadSingleWriteObject;
 import common.OfferType;
 import stock.dtos.Offer;
 import stock.dtos.Transaction;
@@ -30,7 +31,7 @@ public class Stock implements Runnable{
 	private MultiReadSingleWriteCollection<Offer> offers = new MultiReadSingleWriteCollection<Offer>(
 			new ArrayList<Offer>());
 	private IBroker broker;
-	private Offer minSell;
+	private MultiReadSingleWriteObject<Offer> minSell = new MultiReadSingleWriteObject<Offer>(null);
 
 	/**
 	 * @param iD
@@ -72,8 +73,8 @@ public class Stock implements Runnable{
 		// delete buy offer
 		offers.delete(buyOffer,sellOffer);
 
-		if(sellOffer == minSell)
-			minSell = getMin(offers.getCollection());
+		if(sellOffer == minSell.get())
+			minSell.put(getMin(offers.getCollection()));
 
 		// create transaction
 		Transaction transaction = new Transaction(sellOffer, buyOffer, this.ID,buyOffer.getPrice(),Math.min(sellOffer.getQuantity(), buyOffer.getQuantity()));
@@ -100,8 +101,8 @@ public class Stock implements Runnable{
 	}
 
 	public double getMinPrice() {
-		if(minSell != null)
-			return minSell.getPrice();
+		if(minSell.get() != null)
+			return minSell.get().getPrice();
 		return -1;
 	}
 
@@ -121,10 +122,10 @@ public class Stock implements Runnable{
 
 		} else if (offer.getOfferType() == OfferType.SELL) {
 			Logger.log(ID,"offer added: " + offer.getID());
-			if (minSell == null)
-				minSell = offer;
-			else if (minSell.getPrice() > offer.getPrice())
-				minSell = offer;
+			if (minSell.get() == null)
+				minSell.put(offer);
+			else if (minSell.get().getPrice() > offer.getPrice())
+				minSell.put(offer);
 			// this.notify();
 			return true;
 		}
@@ -143,8 +144,8 @@ public class Stock implements Runnable{
 
 
 		if (newOffer.getOfferType() == OfferType.SELL) {
-			if (minSell.getID() == offerID) {
-				minSell = getMin(off);
+			if (minSell.get().getID() == offerID) {
+				minSell.put(getMin(off));
 			}
 		}
 

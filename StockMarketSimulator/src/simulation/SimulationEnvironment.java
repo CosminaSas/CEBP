@@ -1,18 +1,14 @@
 package simulation;
 
-import client.Client;
-import clientbroker.ICBrokerImpl;
-import common.Logger;
-import common.OfferType;
-import stock.Stock;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import broker.IBroker;
 import broker.IBrokerImpl;
+import client.Client;
+import clientbroker.ICBrokerImpl;
+import common.Logger;
+import stock.Stock;
 
 public class SimulationEnvironment implements Runnable{
 
@@ -102,10 +98,10 @@ public class SimulationEnvironment implements Runnable{
             }
         }
 
-        
-        for (Client client : client_array) {
-            client.printInfo();
-        }
+        if(output)
+            for (Client client : client_array) {
+                client.printInfo();
+            }
 
 
 

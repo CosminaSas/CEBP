@@ -5,89 +5,84 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.Random;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import stock.dtos.Offer;
-
 public class MultiReadSingleWriteCollection<T> {
 
-    public static void main(String[] args) {
-        // MultiReadSingleWriteCollection<Integer> q = new MultiReadSingleWriteCollection<Integer> (new PriorityQueue<Integer>());
-        // List<Thread> runnables = new ArrayList<>();
+    // public static void main(String[] args) {
+    //     // MultiReadSingleWriteCollection<Integer> q = new MultiReadSingleWriteCollection<Integer> (new PriorityQueue<Integer>());
+    //     // List<Thread> runnables = new ArrayList<>();
 
-        // for(int i = 0 ; i < 10 ; i++){
-        //     runnables.add(new Thread(new WR(q)));
-        // }
-        // for(int i = 0 ; i < 100 ; i++){
-        //     runnables.add(new Thread(new RR(q)));
-        // }
+    //     // for(int i = 0 ; i < 10 ; i++){
+    //     //     runnables.add(new Thread(new WR(q)));
+    //     // }
+    //     // for(int i = 0 ; i < 100 ; i++){
+    //     //     runnables.add(new Thread(new RR(q)));
+    //     // }
         
-        // runnables.forEach((t) -> {t.start();});
+    //     // runnables.forEach((t) -> {t.start();});
         
-        // runnables.forEach((t) -> {try {
-        //     t.join();
-        // } catch (InterruptedException e) {
-        //     e.printStackTrace();
-        // }});
+    //     // runnables.forEach((t) -> {try {
+    //     //     t.join();
+    //     // } catch (InterruptedException e) {
+    //     //     e.printStackTrace();
+    //     // }});
 
-        // q.collection.forEach((i)->{Logger.log(null,i+"");});
+    //     // q.collection.forEach((i)->{Logger.log(null,i+"");});
 
-        MultiReadSingleWriteCollection<Offer> q = new MultiReadSingleWriteCollection<>(new ArrayList<>());
-        Offer o = new Offer("clientID", "stockID", 1, 1, OfferType.SELL, null);
-        Offer o2 = new Offer("clientID", "stockID", 1, 1, OfferType.SELL, null);
-        q.add(o);
-        q.add(o2);
-        q.getCollection().forEach((os)->{Logger.log("test", os.toString());});
+    //     // MultiReadSingleWriteCollection<Offer> q = new MultiReadSingleWriteCollection<>(new ArrayList<>());
+    //     // Offer o = new Offer("clientID", "stockID", 1, 1, OfferType.SELL, null);
+    //     // Offer o2 = new Offer("clientID", "stockID", 1, 1, OfferType.SELL, null);
+    //     // q.add(o);
+    //     // q.add(o2);
+    //     // q.getCollection().forEach((os)->{Logger.log("test", os.toString());});
 
-        q.delete(new Offer[]{Offer.getOfferForCompare(o.getID()),Offer.getOfferForCompare(o2.getID())});
+    //     // q.delete(new Offer[]{Offer.getOfferForCompare(o.getID()),Offer.getOfferForCompare(o2.getID())});
 
-        q.getCollection().forEach((os)->{Logger.log("test", os.toString());});
+    //     // q.getCollection().forEach((os)->{Logger.log("test", os.toString());});
 
-    }
+    // }
 
-    private static class WR implements Runnable{
-        Random rnd = new Random();
-        MultiReadSingleWriteCollection<Integer> q;
+    // private static class WR implements Runnable{
+    //     Random rnd = new Random();
+    //     MultiReadSingleWriteCollection<Integer> q;
 
-        public WR(MultiReadSingleWriteCollection<Integer> q){
-            this.q = q;
-        }
+    //     public WR(MultiReadSingleWriteCollection<Integer> q){
+    //         this.q = q;
+    //     }
 
-        @Override
-        public void run() {
-            for(int i = 0 ; i < 10 ; i++){
-                q.add(i);
-            }
+    //     @Override
+    //     public void run() {
+    //         for(int i = 0 ; i < 10 ; i++){
+    //             q.add(i);
+    //         }
             
-        }
+    //     }
         
         
-    }
+    // }
 
-    private static class RR implements Runnable{
-        MultiReadSingleWriteCollection<Integer> q;
+    // private static class RR implements Runnable{
+    //     MultiReadSingleWriteCollection<Integer> q;
 
-        public RR(MultiReadSingleWriteCollection<Integer> q){
-            this.q = q;
-        }
+    //     public RR(MultiReadSingleWriteCollection<Integer> q){
+    //         this.q = q;
+    //     }
 
-        @Override
-        public void run() {
-            for(int i = 0 ; i < 100; i++){
-                q.getCollection();
-            }
+    //     @Override
+    //     public void run() {
+    //         for(int i = 0 ; i < 100; i++){
+    //             q.getCollection();
+    //         }
             
-        }
+    //     }
         
         
-    }
+    // }
 
 
 

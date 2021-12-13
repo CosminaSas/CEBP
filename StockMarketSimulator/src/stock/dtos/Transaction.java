@@ -1,10 +1,6 @@
 package stock.dtos;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-
-import javax.swing.text.html.HTMLDocument.HTMLReader.PreAction;
 
 public class Transaction implements Comparable<Transaction>{
 

@@ -1,14 +1,11 @@
 package client;
 
-import java.security.Timestamp;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.Random;
 
 import client.dtos.StockOffer;
 import client.dtos.StockTransaction;
@@ -17,9 +14,6 @@ import common.ChanceGenerator;
 import common.Logger;
 import common.MultiReadSingleWriteCollection;
 import common.OfferType;
-import stock.Stock;
-import clientbroker.*;
-import stock.dtos.Transaction;
 
 public class Client implements Runnable{
 
@@ -45,8 +39,6 @@ public class Client implements Runnable{
 	private MultiReadSingleWriteCollection<StockOffer> pendingOffers;
 	private Map<String,Integer> ownedStocks;
 	private List<String> stocks;
-	private List<ICBrokerImpl> sellOffer;
-	private List<StockOffer> decideBuy;
 	public double new_p;
 	private volatile Boolean running = false;
 
@@ -89,7 +81,7 @@ public class Client implements Runnable{
 			cyclic();
 			synchronized(this){
 				try {
-					this.wait(1000);
+					this.wait(new Random().nextInt(10000));
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -206,12 +198,8 @@ public class Client implements Runnable{
 
 	private void modifyOffer(StockOffer o, double price) {
 		
-		
-		if(o.getType() == OfferType.SELL){
-			ownedStocks.compute(o.getStockID(), (id,val)->{return ((val == null)?0:val) + o.getQuantity();});
-		}
 		price += ((new Random().nextDouble() - 0.5)/10) *price;
-		StockOffer no = new StockOffer(o.getID(),o.getStockID(),o.getType(),price,o.getQuantity());
+		StockOffer no = new StockOffer(o.getID(),ID,o.getStockID(),o.getType(),price,o.getQuantity());
 		cBroker.modifyOffer(o.getID(), no, this.new OfferCallback(no));
 		pendingOffers.delete(o);
 		pendingOffers.add(no);
@@ -239,8 +227,7 @@ public class Client implements Runnable{
 			});
 		}
 		
-		StockOffer offer = new StockOffer(stockID, stockID, type, price, amount);
-		offer.setClientID(ID);
+		StockOffer offer = new StockOffer("",ID, stockID, type, price, amount);
 		
 		cBroker.addOffer(stockID, offer, this.new OfferCallback(offer));
 		
@@ -287,11 +274,10 @@ public class Client implements Runnable{
 			Logger.log(ID, "Transaction " + tr+ " for offer " + offer);
 			if(tr!=null){
 				if(tr.getNewOfferID() != null){
-					offer.setID(tr.getNewOfferID());
-					offer.setQuantity(offer.getQuantity() - tr.getQuantity());
-				}else{
-					pendingOffers.delete(offer);
+					StockOffer nOffer = new StockOffer(tr.getNewOfferID(),ID,offer.getStockID(),offer.getType(),offer.getPrice(),offer.getQuantity() - tr.getQuantity());
+					pendingOffers.add(nOffer);
 				}
+				pendingOffers.delete(offer);
 				if(offer.getType() == OfferType.BUY){
 					Integer sc = ownedStocks.get(offer.getStockID());
 					int c =  tr.getQuantity();
