@@ -188,10 +188,11 @@ public class Stock implements Runnable{
 	}
 
 
-	public void setRunning(boolean b) {
+	public synchronized void setRunning(boolean b) {
 		synchronized(running){
 			running = b;
 		}
+		this.notify();
 	}
 
 	

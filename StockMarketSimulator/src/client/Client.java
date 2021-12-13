@@ -76,18 +76,17 @@ public class Client implements Runnable{
 
 		while(true){
 			synchronized(running){
-				if(running == false) break;
+				if(!running) break;
 			}
 			cyclic();
 			synchronized(this){
 				try {
-					this.wait(new Random().nextInt(10000));
+					this.wait(new Random().nextInt(200));
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
 		}
-		
 		
 	}
 
@@ -211,10 +210,9 @@ public class Client implements Runnable{
 	/**
 	 * @param running the running to set
 	 */
-	public void setRunning(boolean running) {
-		synchronized(this.running){
-			this.running = running;
-		}
+	public synchronized void setRunning(boolean running) {
+		this.running = running;
+		this.notify();
 	}
 	
 	private StockOffer newOffer(String stockID, double price, int amount, OfferType type){
