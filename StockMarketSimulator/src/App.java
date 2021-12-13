@@ -52,7 +52,7 @@ public class App {
         os.add(c7);
         os.add(c8);
 
-        SimulationEnvironment sim = new SimulationEnvironment(8, 3, 30L, stocks ,clients, os,true);
+        SimulationEnvironment sim = new SimulationEnvironment(8, 3, 60L, stocks ,clients, os,true);
 
         Thread tsim = new Thread(sim);
 

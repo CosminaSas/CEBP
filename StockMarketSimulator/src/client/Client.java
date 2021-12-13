@@ -121,7 +121,7 @@ public class Client implements Runnable{
 
 					price += ((new Random().nextDouble() - 0.5)/10) *price;
 					
-					nostocks = new Random().nextInt(100);
+					nostocks = new Random().nextInt(100) + 1;
 
 					Logger.log(ID,"Decided to buy stock " + nostocks+ "X " + stocks.get(stockIndex) + " at price " + price);
 
@@ -273,11 +273,11 @@ public class Client implements Runnable{
 		public void accept(StockTransaction tr) {
 			Logger.log(ID, "Transaction " + tr+ " for offer " + offer);
 			if(tr!=null){
+				pendingOffers.delete(offer);
 				if(tr.getNewOfferID() != null){
 					StockOffer nOffer = new StockOffer(tr.getNewOfferID(),ID,offer.getStockID(),offer.getType(),offer.getPrice(),offer.getQuantity() - tr.getQuantity());
 					pendingOffers.add(nOffer);
 				}
-				pendingOffers.delete(offer);
 				if(offer.getType() == OfferType.BUY){
 					Integer sc = ownedStocks.get(offer.getStockID());
 					int c =  tr.getQuantity();

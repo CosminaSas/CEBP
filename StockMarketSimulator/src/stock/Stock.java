@@ -19,7 +19,7 @@ import stock.dtos.Transaction;
 public class Stock implements Runnable{
 
 	// testing purpose
-	private static final BiConsumer<String, Transaction> callback = new MockConsumer();
+	// private static final BiConsumer<String, Transaction> callback = new MockConsumer();
 	private static final Offer[] oarr = new Offer[0];
 	private static final Transaction[] tarr = new Transaction[0];
 
@@ -269,66 +269,66 @@ public class Stock implements Runnable{
 		}
 	}
 	
-	private static class MockConsumer implements BiConsumer<String, Transaction>{
-		@Override
-		public void accept(String t, Transaction u) {			
-		}
+	// private static class MockConsumer implements BiConsumer<String, Transaction>{
+	// 	@Override
+	// 	public void accept(String t, Transaction u) {			
+	// 	}
 
-	}
+	// }
 
-	public static void main(String args[]) {
-		Stock stock = new Stock("INTC");
-		IBroker broker = new IBrokerImpl();
-		stock.setBroker(broker);
+	// public static void main(String args[]) {
+	// 	Stock stock = new Stock("INTC");
+	// 	IBroker broker = new IBrokerImpl();
+	// 	stock.setBroker(broker);
 
-		Offer sellOffer1 = new Offer("seller1", "123", 10.4, 1, OfferType.SELL, callback);
-		Offer sellOffer2 = new Offer("seller2", "123", 30.4, 3, OfferType.SELL, callback);
-		Offer sellOffer3 = new Offer("seller3", "123", 31.4, 1, OfferType.SELL, callback);
-		Offer buyOffer1 = new Offer("client1", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer buyOffer2 = new Offer("client2", "123", 21.4, 6, OfferType.BUY, callback);
-		Offer buyOffer3 = new Offer("client3", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer sellOffer6 = new Offer("seller6", "123", 12.4, 1, OfferType.SELL, callback);
-		Offer sellOffer7 = new Offer("seller7", "123", 23.4, 1, OfferType.SELL, callback);
-		Offer buyOffer5 = new Offer("client5", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer buyOffer6 = new Offer("client6", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer sellOffer10 = new Offer("seller10", "123", 9.4, 9, OfferType.SELL, callback);
-		Offer buyOffer4 = new Offer("client4", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer sellOffer4 = new Offer("seller4", "123", 50.4, 1, OfferType.SELL, callback);
-		Offer buyOffer7 = new Offer("client7", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer sellOffer9 = new Offer("seller9", "123", 35.4, 1, OfferType.SELL, callback);
-		Offer sellOffer5 = new Offer("seller5", "123", 5.4, 10, OfferType.SELL, callback);
-		Offer buyOffer8 = new Offer("client8", "123", 310.4, 10, OfferType.BUY, callback);
-		Offer buyOffer9 = new Offer("client9", "123", 31.4, 1, OfferType.BUY, callback);
-		Offer sellOffer8 = new Offer("seller8", "123", 41.4, 1, OfferType.SELL, callback);
-		Offer buyOffer10 = new Offer("client10", "123", 31.4, 1, OfferType.BUY, callback);
+	// 	Offer sellOffer1 = new Offer("seller1", "123", 10.4, 1, OfferType.SELL, callback);
+	// 	Offer sellOffer2 = new Offer("seller2", "123", 30.4, 3, OfferType.SELL, callback);
+	// 	Offer sellOffer3 = new Offer("seller3", "123", 31.4, 1, OfferType.SELL, callback);
+	// 	Offer buyOffer1 = new Offer("client1", "123", 31.4, 1, OfferType.BUY, callback);
+	// 	Offer buyOffer2 = new Offer("client2", "123", 21.4, 6, OfferType.BUY, callback);
+	// 	Offer buyOffer3 = new Offer("client3", "123", 31.4, 1, OfferType.BUY, callback);
+	// 	Offer sellOffer6 = new Offer("seller6", "123", 12.4, 1, OfferType.SELL, callback);
+	// 	Offer sellOffer7 = new Offer("seller7", "123", 23.4, 1, OfferType.SELL, callback);
+	// 	Offer buyOffer5 = new Offer("client5", "123", 31.4, 1, OfferType.BUY, callback);
+	// 	Offer buyOffer6 = new Offer("client6", "123", 31.4, 1, OfferType.BUY, callback);
+	// 	Offer sellOffer10 = new Offer("seller10", "123", 9.4, 9, OfferType.SELL, callback);
+	// 	Offer buyOffer4 = new Offer("client4", "123", 31.4, 1, OfferType.BUY, callback);
+	// 	Offer sellOffer4 = new Offer("seller4", "123", 50.4, 1, OfferType.SELL, callback);
+	// 	Offer buyOffer7 = new Offer("client7", "123", 31.4, 1, OfferType.BUY, callback);
+	// 	Offer sellOffer9 = new Offer("seller9", "123", 35.4, 1, OfferType.SELL, callback);
+	// 	Offer sellOffer5 = new Offer("seller5", "123", 5.4, 10, OfferType.SELL, callback);
+	// 	Offer buyOffer8 = new Offer("client8", "123", 310.4, 10, OfferType.BUY, callback);
+	// 	Offer buyOffer9 = new Offer("client9", "123", 31.4, 1, OfferType.BUY, callback);
+	// 	Offer sellOffer8 = new Offer("seller8", "123", 41.4, 1, OfferType.SELL, callback);
+	// 	Offer buyOffer10 = new Offer("client10", "123", 31.4, 1, OfferType.BUY, callback);
 
-		stock.addOffer(sellOffer1);
-		stock.addOffer(buyOffer1);
-		stock.addOffer(sellOffer2);
-		stock.addOffer(sellOffer3);
-		stock.addOffer(buyOffer2);
-		stock.addOffer(buyOffer3);
-		stock.addOffer(buyOffer4);
-		stock.addOffer(buyOffer5);
-		stock.addOffer(sellOffer4);
-		stock.addOffer(buyOffer6);
-		stock.addOffer(buyOffer7);
-		stock.addOffer(sellOffer5);
-		stock.addOffer(sellOffer6);
-		stock.addOffer(sellOffer7);
-		stock.addOffer(sellOffer8);
-		stock.addOffer(buyOffer8);
-		stock.addOffer(buyOffer9);
-		stock.addOffer(buyOffer10);
-		stock.addOffer(sellOffer9);
-		stock.addOffer(sellOffer10);
-		stock.cyclic();
-		// stock.running = false;
-		Logger.log(null,"Gata");
+	// 	stock.addOffer(sellOffer1);
+	// 	stock.addOffer(buyOffer1);
+	// 	stock.addOffer(sellOffer2);
+	// 	stock.addOffer(sellOffer3);
+	// 	stock.addOffer(buyOffer2);
+	// 	stock.addOffer(buyOffer3);
+	// 	stock.addOffer(buyOffer4);
+	// 	stock.addOffer(buyOffer5);
+	// 	stock.addOffer(sellOffer4);
+	// 	stock.addOffer(buyOffer6);
+	// 	stock.addOffer(buyOffer7);
+	// 	stock.addOffer(sellOffer5);
+	// 	stock.addOffer(sellOffer6);
+	// 	stock.addOffer(sellOffer7);
+	// 	stock.addOffer(sellOffer8);
+	// 	stock.addOffer(buyOffer8);
+	// 	stock.addOffer(buyOffer9);
+	// 	stock.addOffer(buyOffer10);
+	// 	stock.addOffer(sellOffer9);
+	// 	stock.addOffer(sellOffer10);
+	// 	stock.cyclic();
+	// 	// stock.running = false;
+	// 	Logger.log(null,"Gata");
 
-		stock.getOffers().forEach((e)->{Logger.log(null,e.toString());});
-		stock.getTransactionHistory().forEach((e)->{Logger.log(null,e.toString());});
-	}
+	// 	stock.getOffers().forEach((e)->{Logger.log(null,e.toString());});
+	// 	stock.getTransactionHistory().forEach((e)->{Logger.log(null,e.toString());});
+	// }
 
 	
 }
