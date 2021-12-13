@@ -1,53 +1,64 @@
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import broker.IBroker;
-import broker.IBrokerImpl;
-import client.Client;
-import clientbroker.ICBrokerImpl;
-import common.OfferType;
-import stock.Stock;
-import stock.dtos.Transaction;
+import simulation.SimulationEnvironment;
 
 public class App {
     public static void main(String[] args) throws Exception {
 
+        List<String> stocks = new ArrayList<>();
+        List<String> clients = new ArrayList<>();
+        List<Map<String,Integer>> os = new ArrayList<>();
 
-        IBroker broker = new IBrokerImpl();
-        Client c1 = new Client("id 1", new ICBrokerImpl(broker,"id 1"));
-        Client c2 = new Client("id 1", new ICBrokerImpl(broker,"id 2"));
+        stocks.add("INTC");
+        stocks.add("META");
+        stocks.add("AMZN");
 
-        Stock s1 = new Stock("s1");
-        Stock s2 = new Stock("s2");
-        Stock s3 = new Stock("s3");
-        Stock s4 = new Stock("s4");
-        Stock s5 = new Stock("s5");
+        clients.add("c1");
+        clients.add("c2");
+        clients.add("c3");
+        clients.add("c4");
+        clients.add("c5");
+        clients.add("c6");
+        clients.add("c7");
+        clients.add("c8");
 
-        c1.getStocks();
-        broker.subscribe(s1);
-        c1.getStocks();
-        broker.subscribe(s2);
-        c1.getStocks();
-        broker.subscribe(s3);
-        c1.getStocks();
-        broker.subscribe(s4);
-        c1.getStocks();
-        broker.subscribe(s5);
-        c1.getStocks();
-        
-        c1.getBuyOffers(s1.getID());
-        c1.addOffer(s1.getID(), 2, 3.5, OfferType.BUY);
-        c1.getBuyOffers(s1.getID());
+        Map<String,Integer> c1,c2,c3,c4,c5,c6,c7,c8;
 
-        c1.addOffer(s1.getID(), 3, 3.5, OfferType.BUY);
-        c1.addOffer(s1.getID(), 4, 3.5, OfferType.BUY);
-        c1.addOffer(s1.getID(), 5, 3.5, OfferType.BUY);
-        c1.addOffer(s1.getID(), 6, 3.5, OfferType.BUY);
-        c1.getBuyOffers(s1.getID());
+        c1 = new HashMap<>();
+        c1.put("INTC",  5);
+        c1.put("META", 20);
+        c2 = new HashMap<>();
+        c2.put("INTC", 10);
+        c3 = new HashMap<>();
+        c4 = new HashMap<>();
+        c5 = new HashMap<>();
+        c6 = new HashMap<>();
+        c6.put("AMZN", 30);
+        c7 = new HashMap<>();
+        c7.put("AMZN", 10);
+        c7.put("META", 10);
+        c7.put("INTC", 10);
+        c8 = new HashMap<>();
 
-        c2.getBuyOffers(s1.getID());
+        os.add(c1);
+        os.add(c2);
+        os.add(c3);
+        os.add(c4);
+        os.add(c5);
+        os.add(c6);
+        os.add(c7);
+        os.add(c8);
 
-        c1.addOffer(s1.getID(), 6, 3.5, OfferType.SELL);
-        c1.getSellOffers(s1.getID());
+        SimulationEnvironment sim = new SimulationEnvironment(8, 3, 60L, stocks ,clients, os,true);
+
+        Thread tsim = new Thread(sim);
+
+        tsim.start();
+
+        tsim.join();
     }
 
     

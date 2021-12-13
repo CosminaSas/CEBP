@@ -1,22 +1,21 @@
 package clientbroker;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import broker.IBroker;
 import client.dtos.StockOffer;
 import client.dtos.StockTransaction;
-import stock.Stock;
+import common.OfferType;
 import stock.dtos.Offer;
 import stock.dtos.Transaction;
 
 public class ICBrokerImpl implements ICBroker{
 
-	private Map<String, Stock> stocks = new ConcurrentHashMap<String, Stock>(); //client-stock, broker=stocks?
-	private List<StockTransaction> transactions = new ArrayList<>();
     private IBroker broker;
     private String clientID;
 
@@ -30,31 +29,54 @@ public class ICBrokerImpl implements ICBroker{
     }
 
     @Override
-	public boolean addOffer(String stockID, StockOffer offer, BiConsumer<Boolean, StockTransaction> callback) {
-        offer.setClientID(clientID);
+	public boolean addOffer(String stockID, StockOffer offer, Consumer<StockTransaction> callback) {
         Offer serverOffer = stockOfferToOffer(offer,callback);
 		return broker.addOffer(serverOffer, stockID);
 	}
 	
-    private Offer stockOfferToOffer(StockOffer offer, BiConsumer<Boolean, StockTransaction> callback) {
-        Offer o = new Offer(offer.getClientID(),offer.getStockID() ,offer.getPrice(),offer.getQuantity(), offer.getType(), (ts,tr) -> {
-            StockTransaction str = transactionToStockTransaction(tr);
-            callback.accept(ts,str);
-        });
+    private Offer stockOfferToOffer(StockOffer offer, Consumer<StockTransaction> callback) {
+        Offer o = new Offer(offer.getClientID(),offer.getStockID() ,offer.getPrice(),offer.getQuantity(), offer.getType(), new Callback(callback));
         offer.setID(o.getID());
         return o;
     }
 
-    private StockTransaction transactionToStockTransaction(Transaction tr) {
+    private class Callback implements BiConsumer<String, Transaction>{
+
+        private Consumer<StockTransaction> callback;
+
+        /**
+         * @param callback
+         */
+        public Callback(Consumer<StockTransaction> callback) {
+            this.callback = callback;
+        }
+
+
+
+        @Override
+        public void accept(String no, Transaction tr) {
+            StockTransaction str = transactionToStockTransaction(no,tr);
+            callback.accept(str);
+            
+        }
+
+    }
+
+
+    private StockTransaction transactionToStockTransaction(String no,Transaction tr) {
 
         String oID;
+        OfferType tp;
+
 
         if(tr.getBuyOffer().getClientID().equals(clientID)){
             oID = tr.getBuyOffer().getID();
+            tp = OfferType.BUY;
         }else{
             oID = tr.getSellOffer().getID();
+            tp = OfferType.SELL;
         }
-        return new StockTransaction(tr.getID(), oID ,tr.getPrice(),tr.getQuantity() , tr.getTimestamp());
+        return new StockTransaction(tr.getID(),tr.getStockID(), oID ,tr.getPrice(),tr.getQuantity() ,no,tp, tr.getTimestamp());
     }
 
     @Override
@@ -69,42 +91,55 @@ public class ICBrokerImpl implements ICBroker{
 
     @Override
     public List<StockOffer> getStockBuyOffers(String stockID) {
-        List<Offer> sOffers = broker.getBuyOffers(stockID);
+        Collection<Offer> sOffers = broker.getOffers(stockID);
         List<StockOffer> offers = new ArrayList<>();
 
-        sOffers.forEach((o) -> {offers.add(offerToStockOffer(o));});
+        sOffers.forEach((o) -> {
+            if(o.getOfferType() == OfferType.BUY)
+                offers.add(offerToStockOffer(o));
+        });
 
         return offers;
     }
 
     private StockOffer offerToStockOffer(Offer o) {
-        return new StockOffer(o.getID(), o.getStockID(), o.getOfferType(), o.getPrice(), o.getQuantity());
+        return new StockOffer(o.getID(),clientID,o.getStockID(), o.getOfferType(), o.getPrice(), o.getQuantity());
     }
 
     @Override
     public List<StockOffer> getStockSellOffers(String stockID) {
-        List<Offer> sOffers = broker.getSellOffers(stockID);
+        Collection<Offer> sOffers = broker.getOffers(stockID);
         List<StockOffer> offers = new ArrayList<>();
 
-        sOffers.forEach((o) -> {offers.add(offerToStockOffer(o));});
+        sOffers.forEach((o) -> {
+            if(o.getOfferType() == OfferType.SELL)
+                offers.add(offerToStockOffer(o));
+        });
 
         return offers;
     }
 
     @Override
     public List<StockTransaction> getStockHistory(String stockID) {
-        List<Transaction> sHist = broker.getStockHistory(stockID);
+        Collection<Transaction> sHist = broker.getStockHistory(stockID);
         List<StockTransaction> hist = new ArrayList<>();
 
-        sHist.forEach((t) -> {hist.add(transactionToStockTransaction(t));});
+        sHist.forEach((t) -> {hist.add(transactionToStockTransaction(null,t));});
 
         return hist;
     }
 
     @Override
-    public String modifyOffer(String offerID, StockOffer newOffer,BiConsumer<Boolean,StockTransaction> callback) {
+    public String modifyOffer(String offerID, StockOffer newOffer,Consumer<StockTransaction> callback) {
         Offer serverOffer = stockOfferToOffer(newOffer,callback);
 		return broker.modifyOffer(newOffer.getStockId(), offerID, serverOffer);
+    }
+
+    @Override
+    public boolean deleteOffer(List<String> offerIDs,String stockID) {
+        List<Offer> offers = offerIDs.stream().map((id)->{return Offer.getOfferForCompare(id);}).collect(Collectors.toList());
+        broker.deleteOffer(offers,stockID);
+        return true;
     }
 }
 

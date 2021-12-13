@@ -2,68 +2,99 @@ package stock.dtos;
 
 import java.time.LocalDateTime;
 
-public class Transaction {
+public class Transaction implements Comparable<Transaction>{
 
-	private String ID;
-	private Offer sellOffer;
-	private Offer buyOffer;
-	private String stockID;
-	private LocalDateTime timestamp;
+	private volatile static Integer IDs = 0;
 
-	public Transaction(String iD, Offer sellOffer, Offer buyOffer, String stockID, LocalDateTime timestamp) {
-		ID = iD;
+	private final String ID;
+	private final Offer sellOffer;
+	private final Offer buyOffer;
+	private final String stockID;
+	private final LocalDateTime timestamp;
+	private final long createdAt;
+	private final double price;
+	private final int quantity;
+
+
+
+	public Transaction(Offer sellOffer, Offer buyOffer, String stockID,double price, int quantity) {
+		this.createdAt = System.nanoTime();
+		this.timestamp = LocalDateTime.now();
+		synchronized(Transaction.IDs){
+			this.ID = "" + Transaction.IDs++;
+		}
 		this.sellOffer = sellOffer;
 		this.buyOffer = buyOffer;
 		this.stockID = stockID;
-		this.timestamp = timestamp;
+		this.price = price;
+		this.quantity = quantity;
 	}
 
 	public String getID() {
 		return ID;
 	}
 
-	public void setID(String iD) {
-		ID = iD;
-	}
-
 	public Offer getSellOffer() {
 		return sellOffer;
-	}
-
-	public void setSellOffer(Offer sellOffer) {
-		this.sellOffer = sellOffer;
 	}
 
 	public Offer getBuyOffer() {
 		return buyOffer;
 	}
 
-	public void setBuyOffer(Offer buyOffer) {
-		this.buyOffer = buyOffer;
-	}
-
 	public String getStockID() {
 		return stockID;
 	}
 
-	public void setStockID(String stockID) {
-		this.stockID = stockID;
-	}
 
 	public LocalDateTime getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(LocalDateTime timestamp) {
-		this.timestamp = timestamp;
-	}
-
 	public double getPrice() {
-		return 0;
+		return price;
 	}
 
 	public int getQuantity() {
-		return 0;
+		return quantity;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Transaction [ID=");
+		builder.append(ID);
+		builder.append(", buyOffer=");
+		builder.append(buyOffer);
+		builder.append(", sellOffer=");
+		builder.append(sellOffer);
+		builder.append(", stockID=");
+		builder.append(stockID);
+		builder.append(", timestamp=");
+		builder.append(timestamp);
+		builder.append("]");
+		return builder.toString();
+	}
+
+	/**
+	 * @return the createdAt
+	 */
+	public long getCreatedAt() {
+		return createdAt;
+	}
+
+
+	@Override
+	public int compareTo(Transaction o) {
+		if(this.createdAt < o.getCreatedAt())
+            return -1;
+        if(this.createdAt > o.getCreatedAt())
+            return 1;
+        return 0;
 	}
 
 }

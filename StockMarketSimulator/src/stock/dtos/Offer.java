@@ -4,20 +4,39 @@ import java.util.function.BiConsumer;
 
 import common.OfferType;
 
-public class Offer {
+public final class Offer implements Comparable<Offer>{
 
-    private static int IDs = 0;
+    private volatile static Integer IDs = 0;
 
-    private String ID; // sau string??
-    private String clientID; // sau string??
-    private String stockID;
-    private double price;
-    private int quantity;
-    private OfferType offerType;
-    private BiConsumer<Boolean, Transaction> callback;
+    private final String ID; // sau string??
+    private final String clientID; // sau string??
+    private final String stockID;
+    private final double price;
+    private final int quantity;
+    private final OfferType offerType;
+    private final BiConsumer<String, Transaction> callback;
+    private final long createdAt;
 
-    public Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<Boolean, Transaction> callback) {
-        this.ID = Offer.IDs++ + "";
+    public static Offer getOfferForCompare(String ID){
+        return new Offer(ID);
+    } 
+
+    private Offer(String ID){
+        this.createdAt = 0;
+        this.ID = ID;
+        this.stockID = null;
+        this.clientID = null;
+        this.price = 0;
+        this.quantity = 0;
+        this.offerType = null;
+        this.callback = null;
+    }
+
+    public Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<String, Transaction> callback) {
+        this.createdAt = System.nanoTime();
+        synchronized(Offer.IDs){
+            this.ID = Offer.IDs++ + "";
+        }
         this.stockID = stockID;
         this.clientID = clientID;
         this.price = price;
@@ -26,70 +45,60 @@ public class Offer {
         this.callback = callback;
     }
     
-	/**
-     * @param stockID the stockID to set
-     */
-    public void setStockID(String stockID) {
+    private Offer(String clientID, String stockID,double price, int quantity, OfferType offerType,BiConsumer<String, Transaction> callback,long createdAt) {
+        this.createdAt =createdAt;
+        synchronized(Offer.IDs){
+            this.ID = Offer.IDs++ + "";
+        }
         this.stockID = stockID;
+        this.clientID = clientID;
+        this.price = price;
+        this.quantity = quantity;
+        this.offerType = offerType;
+        this.callback = callback;
     }
+
+    public Offer copy(int quantity){
+        return new Offer(clientID, stockID, price, quantity, offerType, callback, createdAt);
+    }
+
+
+
 
     /**
      * @return the callback
      */
-    public BiConsumer<Boolean, Transaction> getCallback() {
+    public BiConsumer<String, Transaction> getCallback() {
         return callback;
-    }
-
-    /**
-     * @param callback the callback to set
-     */
-    public void setCallback(BiConsumer<Boolean, Transaction> callback) {
-        this.callback = callback;
     }
 
     public String getID() {
         return ID;
     }
 
-    public void setID(String iD) {
-        ID = iD;
-    }
-
     public String getClientID() {
         return clientID;
     }
 
-    public void setClientID(String clientID) {
-        this.clientID = clientID;
-    }
 
     public double getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
-        this.price = price;
-    }
 
     public int getQuantity() {
         return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
     }
 
     public OfferType getOfferType() {
         return offerType;
     }
 
-    public void setOfferType(OfferType offerType) {
-        this.offerType = offerType;
-    }
-
 	public String getStockID() {
 		return stockID;
 	}
+
+   
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -100,10 +109,10 @@ public class Offer {
         StringBuilder builder = new StringBuilder();
         builder.append("Offer [ID=");
         builder.append(ID);
-        builder.append(", callback=");
-        builder.append(callback);
         builder.append(", clientID=");
         builder.append(clientID);
+        builder.append(", createdAt=");
+        builder.append(createdAt);
         builder.append(", offerType=");
         builder.append(offerType);
         builder.append(", price=");
@@ -116,4 +125,58 @@ public class Offer {
         return builder.toString();
     }
 
+    /**
+     * @return the createdAt
+     */
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    @Override
+    public int compareTo(Offer o) {
+        if(this.createdAt < o.getCreatedAt())
+            return -1;
+        if(this.createdAt > o.getCreatedAt())
+            return 1;
+        return 0;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#hashCode()
+     */
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((ID == null) ? 0 : ID.hashCode());
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Offer)) {
+            return false;
+        }
+        Offer other = (Offer) obj;
+        if (ID == null) {
+            if (other.ID != null) {
+                return false;
+            }
+        } else if (!ID.equals(other.ID)) {
+            return false;
+        }
+        return true;
+    }
+
+
+
+    
 }

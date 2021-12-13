@@ -3,12 +3,16 @@ package client;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import client.dtos.StockOffer;
 import client.dtos.StockTransaction;
 import clientbroker.ICBroker;
-import clientbroker.ICBrokerImpl;
 import common.ChanceGenerator;
+import common.Logger;
+import common.MultiReadSingleWriteCollection;
 import common.OfferType;
 
 public class Client implements Runnable{
@@ -29,14 +33,14 @@ public class Client implements Runnable{
 
 	// }
 
-
-	private String id;
+	private String ID;
 	private ICBroker cBroker;
-	private List<StockTransaction> transactionHistory;
-	private List<StockOffer> pendingOffers;
-	private Map<String,Double> ownedStocks;
-
-	private volatile boolean running;
+	private MultiReadSingleWriteCollection<StockTransaction> transactionHistory;
+	private MultiReadSingleWriteCollection<StockOffer> pendingOffers;
+	private Map<String,Integer> ownedStocks;
+	private List<String> stocks;
+	public double new_p;
+	private volatile Boolean running = false;
 
 	
 
@@ -44,24 +48,40 @@ public class Client implements Runnable{
 	 * @param id
 	 * @param cBroker
 	 * @param running
+	 * @param stockID
 	 */
 	public Client(String id, ICBroker cBroker) {
-		this.id = id;
+		this.ID = id;
 		this.cBroker = cBroker;
+		this.ownedStocks = new ConcurrentHashMap<String,Integer>();
+		this.pendingOffers = new MultiReadSingleWriteCollection<StockOffer>( new ArrayList<StockOffer>());
+		this.transactionHistory = new MultiReadSingleWriteCollection<StockTransaction>(new ArrayList<StockTransaction>());
 
-		this.transactionHistory = new ArrayList<StockTransaction>();
+	}
+
+	public Client(String id, ICBroker cBroker,Map<String,Integer> ownedStocks) {
+		this.ID = id;
+		this.cBroker = cBroker;
+		this.ownedStocks = new ConcurrentHashMap<String,Integer>(ownedStocks);
+		this.pendingOffers = new MultiReadSingleWriteCollection<StockOffer>( new ArrayList<StockOffer>());
+		this.transactionHistory = new MultiReadSingleWriteCollection<StockTransaction>(new ArrayList<StockTransaction>());
 
 	}
 
 	@Override
 	public void run() {
-		running = true;
+		synchronized(running){
+			running = true;
+		}
 
-		while(running){
+		while(true){
+			synchronized(running){
+				if(running == false) break;
+			}
 			cyclic();
 			synchronized(this){
 				try {
-					this.wait(1000);
+					this.wait(new Random().nextInt(10000));
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -73,52 +93,147 @@ public class Client implements Runnable{
 
 	private void cyclic() {
 		
-		System.out.println("cyclic " + id);
-		if(new ChanceGenerator().getChance(5, 10)){
-			newOffer(id, 0, 0);
-		}
-		//read stock list
-		//decide if new buy offer
-		//	* get sell offer list
-		//decide if new sell offer for owned stocks
-		//	* get buy offer list
-		//decide if offer modification is necesarry
-
-	}
-
-	public void transactionCallback(boolean trSucc, StockTransaction tr){
-		if(trSucc){
-			//transaction success
-			pendingOffers.removeIf((o)->{return o.getID() == tr.getOfferID();});
-			transactionHistory.add(tr);
-			// add to owned stocks if we bought
-		}else{
-			//offer creation failed
-		}
-		System.out.println("tr " + id);
-	}
-
+		// Logger.log(ID,"cyclic " + id);
 	
-	/**
-	 * @return the running
-	 */
-	public boolean isRunning() {
-		return running;
+		//read stock list[]
+		stocks = cBroker.getStockList();
+	
+		//decide if will buy new stocks
+		if(ChanceGenerator.getChance(5, 10)){
+			//get a random stock
+			int stockIndex = new Random().nextInt(stocks.size());
+			
+			if(!haveSellOffer(stocks.get(stockIndex))){
+				//get its price
+				double stockPrice = cBroker.getStockPrice(stocks.get(stockIndex));
+							
+				// Logger.log(ID, "Stock " + stocks.get(stockIndex) + " price " + stockPrice);
+				if(stockPrice < 0){
+					// Logger.log(ID,"There are no offers for  " + stocks.get(stockIndex));
+					if(ownedStocks.get(stocks.get(stockIndex)) != null){
+						deleteBuyOffers(stocks.get(stockIndex));
+					}
+				}
+				else {
+					//TODO: deviate price and no of stocks
+					double price = stockPrice;
+					int nostocks = 1;
+
+					price += ((new Random().nextDouble() - 0.5)/10) *price;
+					
+					nostocks = new Random().nextInt(100) + 1;
+
+					Logger.log(ID,"Decided to buy stock " + nostocks+ "X " + stocks.get(stockIndex) + " at price " + price);
+
+					newOffer(stocks.get(stockIndex), price, nostocks, OfferType.BUY);		
+				}
+			}					
+		}
+		
+		//decide if new sell offer for owned stocks
+		if(ChanceGenerator.getChance(5, 10)){
+			//get a stock that we own
+			if(ownedStocks.size() > 0){
+				int stockIndex = new Random().nextInt(ownedStocks.size());
+				String stockID = (String) ownedStocks.keySet().toArray()[stockIndex];
+				if(!haveBuyOffer(stockID)){
+					//get the price of the stock
+					double stockPrice = cBroker.getStockPrice(stockID);
+					// Logger.log(ID, "Stock " + stockID + " price " + stockPrice);
+					double price = stockPrice;
+					int nostocks = 1;
+
+					if(stockPrice < 0){
+						price = (new Random().nextDouble() + 1) * 100;
+					}else{
+						price += ((new Random().nextDouble() - 0.5)/10) *price;
+					}
+
+					nostocks = new Random().nextInt(ownedStocks.get(stockID)) + 1;
+
+					Logger.log(ID,"Decided to sell stock "+ nostocks+ "X "  + stockID + " at price " + price);
+					newOffer(stockID, price, nostocks, OfferType.SELL);
+				}
+			}
+		}
+
+		for(StockOffer o: pendingOffers.getCollection()){
+
+			double price = cBroker.getStockPrice(o.getStockId());
+
+			if((price - o.getPrice()) > price/10){
+				modifyOffer(o,price);
+			}
+
+		}
+	}
+	private void deleteBuyOffers(String stockID) {
+		List<StockOffer> todeleteo = new ArrayList<>();
+		List<String> todelete = new ArrayList<>();
+
+		pendingOffers.getCollection().forEach((o)->{if(o.getStockID() == stockID){ todeleteo.add(o); todelete.add(o.getID());}});
+
+		if(cBroker.deleteOffer(todelete,stockID))
+			pendingOffers.delete(todeleteo.toArray(new StockOffer[0]));
+	}
+
+	private boolean val;
+	private boolean haveBuyOffer(String stockID) {
+		val = false;
+		pendingOffers.getCollection().forEach((o)->{
+			if(o.getType() == OfferType.BUY && o.getStockID().equals(stockID)) 
+			val = true;
+		});
+		return val;
+	}
+
+	private boolean haveSellOffer(String stockID) {
+		val = false;
+		pendingOffers.getCollection().forEach((o)->{
+			if(o.getType() == OfferType.SELL && o.getStockID().equals(stockID)) 
+			val = true;
+		});
+		return val;
+	}
+
+	private void modifyOffer(StockOffer o, double price) {
+		
+		price += ((new Random().nextDouble() - 0.5)/10) *price;
+		StockOffer no = new StockOffer(o.getID(),ID,o.getStockID(),o.getType(),price,o.getQuantity());
+		cBroker.modifyOffer(o.getID(), no, this.new OfferCallback(no));
+		pendingOffers.delete(o);
+		pendingOffers.add(no);
+		Logger.log(ID,"Decided to modify offer " + o + "with " + no);
+		
+
 	}
 
 	/**
 	 * @param running the running to set
 	 */
 	public void setRunning(boolean running) {
-		this.running = running;
+		synchronized(this.running){
+			this.running = running;
+		}
 	}
 	
-	private int newOffer(String stockID, double price, double amount){
-
-		StockOffer offer = new StockOffer(stockID, stockID, null, amount, 0);
-
-		cBroker.addOffer(stockID, offer, (Boolean s,StockTransaction t) -> {transactionCallback(s,t);});
-		return 0;
+	private StockOffer newOffer(String stockID, double price, int amount, OfferType type){
+		
+		if(type == OfferType.SELL){
+			ownedStocks.computeIfPresent(stockID,(id,val)->{
+				if(val - amount > 0)
+					return val - amount;
+				return null;
+			});
+		}
+		
+		StockOffer offer = new StockOffer("",ID, stockID, type, price, amount);
+		
+		cBroker.addOffer(stockID, offer, this.new OfferCallback(offer));
+		
+		pendingOffers.add(offer);
+		
+		return offer;
 	}
 
 	public void getStocks(){
@@ -127,9 +242,9 @@ public class Client implements Runnable{
 	}
 
 	private <T> void  printList(List<T> list) {
-		System.out.println("list : ");
+		Logger.log(ID,"list : ");
 		if(list == null) return;
-		list.forEach((e) -> {System.out.println("\t" + e.toString());});
+		list.forEach((e) -> {Logger.log(ID,"\t" + e.toString());});
 	}
 
 	public void getBuyOffers(String stockID){
@@ -142,9 +257,55 @@ public class Client implements Runnable{
 		printList(off);
 	}
 
-	public void addOffer(String stockID, int q, double p,OfferType t){
-		StockOffer off = new StockOffer("", stockID, t, p, q);
-		cBroker.addOffer(stockID, off, (ts,tr) -> {transactionCallback(ts, tr);});
+	private class OfferCallback implements Consumer<StockTransaction>{
+
+		private StockOffer offer;
+		// private List<StockOffer> pendingOffers;
+		/**
+		 * @param offer
+		 */
+		public OfferCallback(StockOffer offer) {
+			this.offer = offer;
+			// this.pendingOffers = pendingOffers;
+		}
+		
+		@Override
+		public void accept(StockTransaction tr) {
+			Logger.log(ID, "Transaction " + tr+ " for offer " + offer);
+			if(tr!=null){
+				pendingOffers.delete(offer);
+				if(tr.getNewOfferID() != null){
+					StockOffer nOffer = new StockOffer(tr.getNewOfferID(),ID,offer.getStockID(),offer.getType(),offer.getPrice(),offer.getQuantity() - tr.getQuantity());
+					pendingOffers.add(nOffer);
+				}
+				if(offer.getType() == OfferType.BUY){
+					Integer sc = ownedStocks.get(offer.getStockID());
+					int c =  tr.getQuantity();
+					if(sc != null)
+						c += sc;
+					ownedStocks.put(offer.getStockID(),c);
+				}
+				transactionHistory.add(tr);
+			}else{
+	
+				pendingOffers.delete(offer);
+			}
+
+		}
+	
+		
 	}
 
+	public void printInfo() {
+		Logger.log(ID, "\n\nInfo for " + ID);
+
+		Logger.log(ID, "\tOwned stocks :");
+		ownedStocks.forEach((s,c)->{Logger.log(ID,"\t\t"+ s + " : " + c);});
+		Logger.log(ID, "\tPending offers:");
+		pendingOffers.getCollection().forEach((o)->{Logger.log(ID,"\t\t" + o);});
+		Logger.log(ID, "\tTransaction history:");
+		transactionHistory.getCollection().forEach((t)->{Logger.log(ID, "\t\t" + t);});
+
+
+	}
 }
